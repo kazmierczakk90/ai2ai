@@ -18,6 +18,7 @@ import { LanguageSwitcher } from "./LanguageSwitcher";
 import { AgentBoard } from "./AgentBoard";
 import { ShortcutManager } from "./ShortcutManager";
 import { EmergencyOverlay } from "./EmergencyOverlay";
+import { EventLog } from "./EventLog";
 
 function StatusDot({ status }: { status: "live" | "idle" | "sealed" }) {
   const map = {
@@ -187,6 +188,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
         <main className="min-w-0 flex-1 bg-grid">{children}</main>
         <AgentBoard />
       </div>
+      <EventLog />
       <EmergencyOverlay />
       <Toaster
         position="bottom-right"

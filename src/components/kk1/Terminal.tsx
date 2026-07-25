@@ -6,6 +6,7 @@ import { FukoText } from "./FukoText";
 import { DeepReasoning } from "./DeepReasoning";
 import { stripFuko } from "./ShortcutManager";
 import { pzk } from "@/lib/pzk";
+import { sendMessageToCore } from "@/lib/api";
 
 function ts(iso: string) {
   const d = new Date(iso);
@@ -94,16 +95,25 @@ export function Terminal() {
     window.speechSynthesis.speak(u);
   }, [messages, voiceMode, lang]);
 
-  const submit = (text?: string) => {
+  const submit = async (text?: string) => {
     const txt = (text ?? draft).trim();
     if (!txt) return;
-    append({
-      id: `m-${Date.now()}`,
-      role: "user",
-      ts: new Date().toISOString(),
-      dialogue: txt,
-    });
     setDraft("");
+    const activeChannel = useKK1Store.getState().activeChannel;
+    // Optimistically append the user message immediately; the API proxy also
+    // returns it (with a server-assigned id) plus a system response.
+    try {
+      const res = await sendMessageToCore({ text: txt, lang, channel: activeChannel });
+      append(res.user_message);
+      append(res.system_message);
+    } catch {
+      append({
+        id: `m-${Date.now()}`,
+        role: "user",
+        ts: new Date().toISOString(),
+        dialogue: txt,
+      });
+    }
     requestAnimationFrame(() => {
       scroller.current?.scrollTo({
         top: scroller.current.scrollHeight,
