@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as ImportRouteImport } from './routes/import'
 import { Route as ArchitectureRouteImport } from './routes/architecture'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ApiPublicTelegramWebhookRouteImport } from './routes/api/public/telegram/webhook'
@@ -16,6 +17,11 @@ import { Route as ApiPublicTelegramTagRouteImport } from './routes/api/public/te
 import { Route as ApiPublicTelegramStatusRouteImport } from './routes/api/public/telegram/status'
 import { Route as ApiPublicTelegramMessagesRouteImport } from './routes/api/public/telegram/messages'
 
+const ImportRoute = ImportRouteImport.update({
+  id: '/import',
+  path: '/import',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ArchitectureRoute = ArchitectureRouteImport.update({
   id: '/architecture',
   path: '/architecture',
@@ -52,6 +58,7 @@ const ApiPublicTelegramMessagesRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/architecture': typeof ArchitectureRoute
+  '/import': typeof ImportRoute
   '/api/public/telegram/messages': typeof ApiPublicTelegramMessagesRoute
   '/api/public/telegram/status': typeof ApiPublicTelegramStatusRoute
   '/api/public/telegram/tag': typeof ApiPublicTelegramTagRoute
@@ -60,6 +67,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/architecture': typeof ArchitectureRoute
+  '/import': typeof ImportRoute
   '/api/public/telegram/messages': typeof ApiPublicTelegramMessagesRoute
   '/api/public/telegram/status': typeof ApiPublicTelegramStatusRoute
   '/api/public/telegram/tag': typeof ApiPublicTelegramTagRoute
@@ -69,6 +77,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/architecture': typeof ArchitectureRoute
+  '/import': typeof ImportRoute
   '/api/public/telegram/messages': typeof ApiPublicTelegramMessagesRoute
   '/api/public/telegram/status': typeof ApiPublicTelegramStatusRoute
   '/api/public/telegram/tag': typeof ApiPublicTelegramTagRoute
@@ -79,6 +88,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/architecture'
+    | '/import'
     | '/api/public/telegram/messages'
     | '/api/public/telegram/status'
     | '/api/public/telegram/tag'
@@ -87,6 +97,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/architecture'
+    | '/import'
     | '/api/public/telegram/messages'
     | '/api/public/telegram/status'
     | '/api/public/telegram/tag'
@@ -95,6 +106,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/architecture'
+    | '/import'
     | '/api/public/telegram/messages'
     | '/api/public/telegram/status'
     | '/api/public/telegram/tag'
@@ -104,6 +116,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ArchitectureRoute: typeof ArchitectureRoute
+  ImportRoute: typeof ImportRoute
   ApiPublicTelegramMessagesRoute: typeof ApiPublicTelegramMessagesRoute
   ApiPublicTelegramStatusRoute: typeof ApiPublicTelegramStatusRoute
   ApiPublicTelegramTagRoute: typeof ApiPublicTelegramTagRoute
@@ -112,6 +125,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/import': {
+      id: '/import'
+      path: '/import'
+      fullPath: '/import'
+      preLoaderRoute: typeof ImportRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/architecture': {
       id: '/architecture'
       path: '/architecture'
@@ -160,6 +180,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ArchitectureRoute: ArchitectureRoute,
+  ImportRoute: ImportRoute,
   ApiPublicTelegramMessagesRoute: ApiPublicTelegramMessagesRoute,
   ApiPublicTelegramStatusRoute: ApiPublicTelegramStatusRoute,
   ApiPublicTelegramTagRoute: ApiPublicTelegramTagRoute,
