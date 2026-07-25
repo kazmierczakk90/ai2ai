@@ -190,9 +190,9 @@ export const useKK1Store = create<State>((set, get) => ({
     set((s) => ({
       agents: s.agents.map((a, i) => {
         // Only occasionally flip status to simulate real-time telemetry.
-        if ((Math.random() * 100) | 0 > 22) return a;
+        if (Math.random() > 0.22) return a;
         const opts: AgentStatus[] = ["idle", "processing", "routing"];
-        const next = opts[((i + Date.now()) | 0) % 3] as AgentStatus;
+        const next = opts[(i + Math.floor(Date.now() / 1000)) % 3] as AgentStatus;
         return { ...a, status: next };
       }),
     })),
