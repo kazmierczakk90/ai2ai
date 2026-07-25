@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { Link } from "@tanstack/react-router";
 import { Toaster } from "sonner";
 import {
   Boxes,
@@ -131,8 +132,23 @@ export function Topbar() {
         <span className="h-1.5 w-1.5 rounded-full bg-fuko-func shadow-[0_0_6px_var(--fuko-func)]" />
         {t("top.online")}
       </div>
-      <span className="opacity-30">│</span>
-      <span className="font-mono text-xs text-foreground">kk1.core / command</span>
+      <span className="font-mono text-xs text-foreground">kk1.core</span>
+
+      <nav className="ml-3 flex items-center gap-1">
+        {[
+          { to: "/", label: "command" },
+          { to: "/architecture", label: "architecture" },
+        ].map((tab) => (
+          <Link
+            key={tab.to}
+            to={tab.to}
+            activeOptions={{ exact: true }}
+            className="rounded px-2 py-1 font-mono text-[11px] uppercase tracking-widest text-muted-foreground hover:bg-panel-2 hover:text-foreground data-[status=active]:border data-[status=active]:border-primary/40 data-[status=active]:bg-primary/10 data-[status=active]:text-primary"
+          >
+            {tab.label}
+          </Link>
+        ))}
+      </nav>
 
       <div className="ml-auto flex items-center gap-3 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
         <span className="hidden md:flex items-center gap-1">
