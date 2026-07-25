@@ -194,30 +194,61 @@ export const useKK1Store = create<State>((set, get) => ({
 
   agents: seedAgents(),
   selectedAgentId: null,
-  selectAgent: (id) => set({ selectedAgentId: id }),
-  pulseAgents: () =>
+  selectAgent: (id) => {
+    set({ selectedAgentId: id });
+    if (id) {
+      const a = get().agents.find((x) => x.id === id);
+      emit("agent.selected", "store.agent", { id, name: a?.name, trust: a?.trust });
+    }
+  },
+  pulseAgents: () => {
+    const changes: { id: string; from: AgentStatus; to: AgentStatus }[] = [];
     set((s) => ({
       agents: s.agents.map((a, i) => {
         // Only occasionally flip status to simulate real-time telemetry.
         if (Math.random() > 0.22) return a;
         const opts: AgentStatus[] = ["idle", "processing", "routing"];
         const next = opts[(i + Math.floor(Date.now() / 1000)) % 3] as AgentStatus;
+        if (next !== a.status) changes.push({ id: a.id, from: a.status, to: next });
         return { ...a, status: next };
       }),
-    })),
+    }));
+    if (changes.length) {
+      emit("agent.status.changed", "store.telemetry", { changes });
+      // Simulate a trust score micro-update on the first changed agent.
+      const first = changes[0];
+      const agent = get().agents.find((a) => a.id === first.id);
+      if (agent) {
+        const delta = Math.round((Math.random() * 0.04 - 0.02) * 100) / 100;
+        emit("trust.score.updated", "store.trust", {
+          agent: agent.name, trust: agent.trust, delta,
+        });
+      }
+    }
+  },
 
   voiceMode: false,
-  toggleVoiceMode: () => set((s) => ({ voiceMode: !s.voiceMode })),
+  toggleVoiceMode: () => {
+    set((s) => ({ voiceMode: !s.voiceMode }));
+    emit("voice.mode.toggled", "store.voice", { on: get().voiceMode });
+  },
 
   emergencyStop: false,
-  triggerEmergency: () => set({ emergencyStop: true }),
-  clearEmergency: () => set({ emergencyStop: false }),
+  triggerEmergency: () => {
+    set({ emergencyStop: true });
+    emit("emergency.triggered", "store.emergency", { at: new Date().toISOString() });
+  },
+  clearEmergency: () => {
+    set({ emergencyStop: false });
+    emit("emergency.cleared", "store.emergency", { at: new Date().toISOString() });
+  },
 
   accentIndex: 0,
   cycleAccent: () => {
     const next = (get().accentIndex + 1) % ACCENTS.length;
     set({ accentIndex: next });
     get().applyAccent();
+    emit("accent.cycled", "store.theme", { accent: ACCENTS[next].name });
   },
   applyAccent: () => {
     if (typeof document === "undefined") return;
