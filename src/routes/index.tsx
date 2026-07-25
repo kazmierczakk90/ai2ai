@@ -1,24 +1,33 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { Shell } from "@/components/kk1/Layout";
+import { Terminal } from "@/components/kk1/Terminal";
 
-// No head() here: the home route inherits title/description/og/twitter from
-// __root.tsx, and ships no og:image so serve-time hosting can inject the
-// project's social preview (explicit og:image or latest screenshot).
 export const Route = createFileRoute("/")({
+  head: () => ({
+    meta: [
+      { title: "KK1 Core · AGI Strategic Engine" },
+      {
+        name: "description",
+        content:
+          "KK1 Core — a command-center SaaS for orchestrating AGI strategy with FUKO-LANG symbols, dual-output terminal, and deep reasoning telemetry.",
+      },
+      { property: "og:title", content: "KK1 Core · AGI Strategic Engine" },
+      {
+        property: "og:description",
+        content:
+          "Command-center for AGI strategy: FUKO-LANG parsing, dual-output terminal, 6D scoring, SDA routing.",
+      },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+    ],
+  }),
   component: Index,
 });
 
-// IMPORTANT: Replace this placeholder. See ./README.md for routing conventions.
 function Index() {
   return (
-    <div
-      className="flex min-h-screen items-center justify-center"
-      style={{ backgroundColor: "#fcfbf8" }}
-    >
-      <img
-        data-lovable-blank-page-placeholder="REMOVE_THIS"
-        src="https://cdn.gpteng.co/blank-app-v1.svg"
-        alt="Your app will live here!"
-      />
-    </div>
+    <Shell>
+      <Terminal />
+    </Shell>
   );
 }
