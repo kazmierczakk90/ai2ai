@@ -6,6 +6,7 @@ import { FukoText } from "./FukoText";
 import { DeepReasoning } from "./DeepReasoning";
 import { stripFuko } from "./ShortcutManager";
 import { pzk } from "@/lib/pzk";
+import { sendMessageToCore } from "@/lib/api";
 
 function ts(iso: string) {
   const d = new Date(iso);
