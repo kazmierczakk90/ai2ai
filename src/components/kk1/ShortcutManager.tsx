@@ -43,6 +43,9 @@ export function ShortcutManager() {
       } else if (e.key === "F4") {
         e.preventDefault();
         triggerEmergency();
+        void import("@/lib/api").then(({ fireEmergencyStop }) =>
+          fireEmergencyStop().catch(() => void 0),
+        );
         pzk(
           {
             intent: "F4 · EMERGENCY STOP",
