@@ -181,8 +181,16 @@ export const useKK1Store = create<State>((set, get) => ({
   expanded: {},
   toggleExpanded: (id) =>
     set((s) => ({ expanded: { ...s.expanded, [id]: !s.expanded[id] } })),
-  appendMessage: (m) => set((s) => ({ messages: [...s.messages, m] })),
-  setActiveChannel: (id) => set({ activeChannel: id }),
+  appendMessage: (m) => {
+    set((s) => ({ messages: [...s.messages, m] }));
+    emit(m.role === "user" ? "message.sent" : "message.received", `store.${m.role}`, {
+      id: m.id, role: m.role, ts: m.ts,
+    });
+  },
+  setActiveChannel: (id) => {
+    set({ activeChannel: id });
+    emit("agent.status.changed", "store.channel", { channel: id });
+  },
 
   agents: seedAgents(),
   selectedAgentId: null,
