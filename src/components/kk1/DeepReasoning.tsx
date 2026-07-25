@@ -1,18 +1,19 @@
 import { ChevronDown, Cpu, GitBranch, Radar, ShieldCheck } from "lucide-react";
-import type { StrategicAnalysis } from "@/store/kk1-store";
+import { pickLocalized, type StrategicAnalysis } from "@/store/kk1-store";
+import { useI18n } from "@/i18n/i18n";
 import { FukoText } from "./FukoText";
 
 const SCORE_META: {
   key: keyof StrategicAnalysis["scoring"];
-  label: string;
+  tkey: string;
   hue: string;
 }[] = [
-  { key: "confidence", label: "Confidence", hue: "var(--fuko-agent)" },
-  { key: "risk", label: "Risk", hue: "var(--fuko-guard)" },
-  { key: "empathy", label: "Empathy", hue: "var(--fuko-skill)" },
-  { key: "focus", label: "Focus", hue: "var(--fuko-func)" },
-  { key: "energy", label: "Energy", hue: "var(--fuko-proc)" },
-  { key: "curiosity", label: "Curiosity", hue: "var(--fuko-cond)" },
+  { key: "confidence", tkey: "score.confidence", hue: "var(--fuko-agent)" },
+  { key: "risk", tkey: "score.risk", hue: "var(--fuko-guard)" },
+  { key: "empathy", tkey: "score.empathy", hue: "var(--fuko-skill)" },
+  { key: "focus", tkey: "score.focus", hue: "var(--fuko-func)" },
+  { key: "energy", tkey: "score.energy", hue: "var(--fuko-proc)" },
+  { key: "curiosity", tkey: "score.curiosity", hue: "var(--fuko-cond)" },
 ];
 
 function Panel({
@@ -66,6 +67,8 @@ export function DeepReasoning({
   open: boolean;
   onToggle: () => void;
 }) {
+  const { t, lang } = useI18n();
+
   return (
     <div className="mt-3 rounded-md border border-border bg-panel/60">
       <button
@@ -75,7 +78,7 @@ export function DeepReasoning({
         <div className="flex items-center gap-2">
           <span className="h-1.5 w-1.5 rounded-full bg-primary shadow-[0_0_8px_var(--color-primary)]" />
           <span className="font-mono text-[11px] uppercase tracking-widest text-muted-foreground">
-            Deep Reasoning UI
+            {t("reason.title")}
           </span>
           <span className="rounded border border-border px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">
             W0 · W1 · 6D · SDA
@@ -90,21 +93,23 @@ export function DeepReasoning({
 
       {open && (
         <div className="grid gap-3 border-t border-border p-3 md:grid-cols-2">
-          <Panel title="W0 · Ingestion Summary" icon={<Radar className="h-3 w-3" />}>
-            <p className="text-muted-foreground">{analysis.w0_ingestion}</p>
+          <Panel title={t("reason.w0")} icon={<Radar className="h-3 w-3" />}>
+            <p className="text-muted-foreground">
+              {pickLocalized(analysis.w0_ingestion, lang)}
+            </p>
           </Panel>
 
           <Panel
-            title="W1 · Identity Filter & FUKO Decision"
+            title={t("reason.w1")}
             icon={<ShieldCheck className="h-3 w-3" />}
           >
             <div className="space-y-2">
               <div className="flex justify-between font-mono text-[11px]">
-                <span className="text-muted-foreground">identity</span>
+                <span className="text-muted-foreground">{t("reason.identity")}</span>
                 <span>{analysis.w1_identity.identity}</span>
               </div>
               <p className="text-muted-foreground">
-                {analysis.w1_identity.fuko_decision}
+                {pickLocalized(analysis.w1_identity.fuko_decision, lang)}
               </p>
               <div className="flex flex-wrap gap-1 pt-1">
                 {analysis.w1_identity.triggered_symbols.map((s) => (
@@ -114,12 +119,12 @@ export function DeepReasoning({
             </div>
           </Panel>
 
-          <Panel title="6D Scoring Matrix" icon={<Cpu className="h-3 w-3" />}>
+          <Panel title={t("reason.6d")} icon={<Cpu className="h-3 w-3" />}>
             <div className="space-y-2">
               {SCORE_META.map((s) => (
                 <Bar
                   key={s.key}
-                  label={s.label}
+                  label={t(s.tkey as never)}
                   value={analysis.scoring[s.key]}
                   hue={s.hue}
                 />
@@ -127,7 +132,7 @@ export function DeepReasoning({
             </div>
           </Panel>
 
-          <Panel title="SDA · Routing Path" icon={<GitBranch className="h-3 w-3" />}>
+          <Panel title={t("reason.sda")} icon={<GitBranch className="h-3 w-3" />}>
             <ol className="space-y-1.5">
               {analysis.sda_routing.map((hop, i) => (
                 <li
@@ -139,7 +144,7 @@ export function DeepReasoning({
                   </span>
                   <FukoText text={hop.agent} />
                   <span className="flex-1 truncate text-muted-foreground">
-                    {hop.role}
+                    {pickLocalized(hop.role, lang)}
                   </span>
                   <span className="tabular-nums text-fuko-func">
                     {hop.latency_ms}ms
