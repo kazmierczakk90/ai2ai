@@ -227,7 +227,7 @@ export { pickLocalized };
 // -------- Telegram (Chat Import) --------
 // Same-origin endpoints served by TanStack server routes under /api/public/telegram/*.
 
-import type { TelegramMessage } from "@/lib/telegram-store.server";
+import type { TelegramMessage } from "@/store/telegram-types";
 
 export type TelegramMessagesResponse = {
   fetched_at: string;
