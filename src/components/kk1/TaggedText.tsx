@@ -1,5 +1,5 @@
 import React from "react";
-import type { TaggedToken, FukoSymbol } from "@/lib/telegram-store.server";
+import type { TaggedToken, FukoSymbol } from "@/store/telegram-types";
 
 const STYLES: Record<FukoSymbol, { cls: string; sigil: string; title: string }> = {
   agent: {

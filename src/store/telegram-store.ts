@@ -1,12 +1,12 @@
 import { create } from "zustand";
-import type { TelegramMessage } from "@/lib/telegram-store.server";
+import type { TelegramMessage } from "@/store/telegram-types";
 import {
   fetchTelegramMessages,
   fetchTelegramStatus,
   retagTelegramMessage,
 } from "@/lib/api";
 
-export type { TelegramMessage } from "@/lib/telegram-store.server";
+export type { TelegramMessage } from "@/store/telegram-types";
 
 export type WebhookStatus = {
   connector_linked: boolean;
