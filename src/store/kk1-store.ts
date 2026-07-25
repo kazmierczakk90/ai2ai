@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import type { Lang } from "@/i18n/i18n";
+import { emit } from "@/lib/event-bus";
 
 export type ScoringMatrix = {
   confidence: number;
