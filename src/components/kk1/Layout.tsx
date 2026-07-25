@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { Link } from "@tanstack/react-router";
 import { Toaster } from "sonner";
 import {
   Boxes,
