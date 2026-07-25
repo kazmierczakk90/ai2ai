@@ -283,6 +283,42 @@ export const DICT: Dict = {
     fr: "F1 style · F4 arrêt · F6 voix",
     es: "F1 estilo · F4 paro · F6 voz",
   },
+  "import.title": {
+    en: "Chat Import · Telegram",
+    pl: "Import Czatu · Telegram",
+    fr: "Import Chat · Telegram",
+    es: "Import Chat · Telegram",
+  },
+  "import.conversations": {
+    en: "conversations",
+    pl: "rozmowy",
+    fr: "conversations",
+    es: "conversaciones",
+  },
+  "import.webhook.on": {
+    en: "webhook active",
+    pl: "webhook aktywny",
+    fr: "webhook actif",
+    es: "webhook activo",
+  },
+  "import.webhook.off": {
+    en: "webhook idle",
+    pl: "webhook nieaktywny",
+    fr: "webhook inactif",
+    es: "webhook inactivo",
+  },
+  "import.retag": {
+    en: "retag",
+    pl: "retaguj",
+    fr: "reclasser",
+    es: "reetiquetar",
+  },
+  "import.empty": {
+    en: "No messages yet. Send a message to the bot.",
+    pl: "Brak wiadomości. Wyślij wiadomość do bota.",
+    fr: "Aucun message. Envoyez un message au bot.",
+    es: "Sin mensajes. Envía un mensaje al bot.",
+  },
 };
 
 type I18nState = {
