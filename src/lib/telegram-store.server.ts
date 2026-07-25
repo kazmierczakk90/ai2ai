@@ -3,29 +3,13 @@
  * Shared across TanStack server routes via a module-level singleton.
  */
 
-export type FukoSymbol = "agent" | "func" | "proc" | "guard" | "skill" | "cond";
+import type {
+  FukoSymbol,
+  TaggedToken,
+  TelegramMessage,
+} from "@/store/telegram-types";
 
-export type TaggedToken = {
-  start: number;
-  end: number;
-  word: string;
-  tag: string; // human-readable tag name
-  symbol: FukoSymbol;
-  confidence: number;
-  suggested: string; // FUKO-LANG suggestion, e.g. "@-analyzer"
-};
-
-export type TelegramMessage = {
-  update_id: number;
-  message_id: number;
-  chat_id: number;
-  chat_title: string;
-  user_id: number | null;
-  user_name: string;
-  text: string;
-  ts: string;
-  tokens: TaggedToken[];
-};
+export type { FukoSymbol, TaggedToken, TelegramMessage };
 
 // ---- storage ----
 
