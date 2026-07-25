@@ -1,6 +1,6 @@
 import { useEffect } from "react";
+import { Toaster } from "sonner";
 import {
-  Activity,
   Boxes,
   Cpu,
   Database,
@@ -11,10 +11,12 @@ import {
   Sparkles,
   Workflow,
 } from "lucide-react";
-import { useKK1Store } from "@/store/kk1-store";
+import { useKK1Store, ACCENTS } from "@/store/kk1-store";
 import { hydrateI18n, useI18n } from "@/i18n/i18n";
-import { FukoText } from "./FukoText";
 import { LanguageSwitcher } from "./LanguageSwitcher";
+import { AgentBoard } from "./AgentBoard";
+import { ShortcutManager } from "./ShortcutManager";
+import { EmergencyOverlay } from "./EmergencyOverlay";
 
 function StatusDot({ status }: { status: "live" | "idle" | "sealed" }) {
   const map = {
@@ -118,71 +120,11 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
   );
 }
 
-export function RightRail() {
-  const { t } = useI18n();
-  return (
-    <aside className="hidden w-72 shrink-0 flex-col gap-3 border-l border-border bg-panel/60 p-3 xl:flex">
-      <div className="rounded border border-border bg-panel p-3">
-        <div className="mb-2 flex items-center gap-2 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
-          <Activity className="h-3 w-3 text-primary" /> {t("rail.pulse")}
-        </div>
-        <div className="space-y-1.5 font-mono text-xs">
-          {[
-            [t("rail.load"), "0.42"],
-            [t("rail.queue"), "003"],
-            [t("rail.agents"), "07/12"],
-            [t("rail.p95"), "412ms"],
-          ].map(([k, v]) => (
-            <div key={k} className="flex justify-between">
-              <span className="text-muted-foreground">{k}</span>
-              <span className="tabular-nums">{v}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <div className="rounded border border-border bg-panel p-3">
-        <div className="mb-2 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
-          {t("rail.legend")}
-        </div>
-        <ul className="space-y-1.5 text-xs">
-          {[
-            "@-[analyzer]",
-            "#-market_scan-",
-            "$-launch_readiness",
-            "!-no_pii_leak-",
-            "/-synteza_strategiczna",
-            "&-jeśli_ryzyko>0.7",
-          ].map((s) => (
-            <li key={s} className="flex items-center gap-2">
-              <FukoText text={s} />
-            </li>
-          ))}
-        </ul>
-      </div>
-
-      <div className="rounded border border-border bg-panel p-3">
-        <div className="mb-2 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
-          {t("rail.guard")}
-        </div>
-        <ul className="space-y-1 font-mono text-xs">
-          <li className="flex items-center gap-2">
-            <span className="h-1.5 w-1.5 rounded-full bg-fuko-guard" /> no_pii_leak
-          </li>
-          <li className="flex items-center gap-2">
-            <span className="h-1.5 w-1.5 rounded-full bg-fuko-guard" /> no_speculation
-          </li>
-          <li className="flex items-center gap-2">
-            <span className="h-1.5 w-1.5 rounded-full bg-fuko-guard" /> audit_trail
-          </li>
-        </ul>
-      </div>
-    </aside>
-  );
-}
-
 export function Topbar() {
   const { t } = useI18n();
+  const accentIndex = useKK1Store((s) => s.accentIndex);
+  const voiceMode = useKK1Store((s) => s.voiceMode);
+
   return (
     <header className="flex h-11 shrink-0 items-center gap-3 border-b border-border bg-panel px-4">
       <div className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
@@ -191,10 +133,25 @@ export function Topbar() {
       </div>
       <span className="opacity-30">│</span>
       <span className="font-mono text-xs text-foreground">kk1.core / command</span>
+
       <div className="ml-auto flex items-center gap-3 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
-        <span className="hidden sm:inline">{t("top.build")} 2026.07.25</span>
-        <span className="hidden md:inline">{t("top.region")} eu-frankfurt</span>
-        <span className="hidden lg:inline">{t("top.rev")} a3f9c1</span>
+        <span className="hidden md:flex items-center gap-1">
+          <span className="opacity-60">accent</span>
+          <span className="rounded border border-border px-1 py-0.5 text-foreground">
+            {ACCENTS[accentIndex].name}
+          </span>
+        </span>
+        <span
+          className={`hidden md:inline rounded border px-1.5 py-0.5 ${
+            voiceMode
+              ? "border-fuko-func/40 bg-fuko-func-bg text-fuko-func"
+              : "border-border text-muted-foreground"
+          }`}
+        >
+          {voiceMode ? t("voice.mode.on") : t("voice.mode.off")}
+        </span>
+        <span className="hidden lg:inline">{t("shortcuts.hint")}</span>
+        <span className="hidden xl:inline">{t("top.build")} 2026.07.25</span>
         <LanguageSwitcher />
       </div>
     </header>
@@ -207,12 +164,18 @@ export function Shell({ children }: { children: React.ReactNode }) {
   }, []);
   return (
     <div className="flex h-screen w-screen flex-col overflow-hidden bg-background text-foreground">
+      <ShortcutManager />
       <Topbar />
       <div className="flex min-h-0 flex-1">
         <Sidebar />
         <main className="min-w-0 flex-1 bg-grid">{children}</main>
-        <RightRail />
+        <AgentBoard />
       </div>
+      <EmergencyOverlay />
+      <Toaster
+        position="bottom-right"
+        toastOptions={{ unstyled: true, classNames: { toast: "!p-0 !bg-transparent !border-0 !shadow-none" } }}
+      />
     </div>
   );
 }
