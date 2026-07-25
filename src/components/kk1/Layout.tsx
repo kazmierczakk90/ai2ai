@@ -139,6 +139,7 @@ export function Topbar() {
         {[
           { to: "/", label: "command" },
           { to: "/architecture", label: "architecture" },
+          { to: "/import", label: "chat import" },
         ].map((tab) => (
           <Link
             key={tab.to}

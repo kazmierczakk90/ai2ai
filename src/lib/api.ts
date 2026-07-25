@@ -223,3 +223,56 @@ export async function fetchEconomicLedger(): Promise<EconomicLedgerResponse> {
 }
 
 export { pickLocalized };
+
+// -------- Telegram (Chat Import) --------
+// Same-origin endpoints served by TanStack server routes under /api/public/telegram/*.
+
+import type { TelegramMessage } from "@/store/telegram-types";
+
+export type TelegramMessagesResponse = {
+  fetched_at: string;
+  count: number;
+  total: number;
+  messages: TelegramMessage[];
+};
+
+export type TelegramStatusResponse = {
+  connector_linked: boolean;
+  webhook_active: boolean;
+  last_ping: string | null;
+  errors: number;
+  messages: number;
+};
+
+async function callLocal<T>(path: string, init?: RequestInit): Promise<T> {
+  const request_id = `req-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
+  emit("api.request", `local${path}`, { request_id, method: init?.method ?? "GET", url: path });
+  const res = await fetch(path, init);
+  if (!res.ok) {
+    emit("api.error", `local${path}`, { request_id, status: res.status });
+    throw new Error(`${path} → ${res.status}`);
+  }
+  const data = (await res.json()) as T;
+  emit("api.response", `local${path}`, { request_id, status: res.status });
+  return data;
+}
+
+export async function fetchTelegramMessages(since = 0): Promise<TelegramMessagesResponse> {
+  return callLocal<TelegramMessagesResponse>(`/api/public/telegram/messages?since=${since}`);
+}
+
+export async function fetchTelegramStatus(): Promise<TelegramStatusResponse> {
+  return callLocal<TelegramStatusResponse>(`/api/public/telegram/status`);
+}
+
+export async function retagTelegramMessage(update_id: number) {
+  return callLocal<{ update_id: number; tokens: TelegramMessage["tokens"] }>(
+    `/api/public/telegram/tag`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ update_id }),
+    },
+  );
+}
+
