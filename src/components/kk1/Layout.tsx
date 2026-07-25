@@ -18,6 +18,7 @@ import { LanguageSwitcher } from "./LanguageSwitcher";
 import { AgentBoard } from "./AgentBoard";
 import { ShortcutManager } from "./ShortcutManager";
 import { EmergencyOverlay } from "./EmergencyOverlay";
+import { EventLog } from "./EventLog";
 
 function StatusDot({ status }: { status: "live" | "idle" | "sealed" }) {
   const map = {
