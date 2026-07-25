@@ -188,6 +188,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
         <main className="min-w-0 flex-1 bg-grid">{children}</main>
         <AgentBoard />
       </div>
+      <EventLog />
       <EmergencyOverlay />
       <Toaster
         position="bottom-right"
