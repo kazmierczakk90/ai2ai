@@ -229,6 +229,60 @@ export const DICT: Dict = {
     fr: "langue",
     es: "idioma",
   },
+  "agents.title": {
+    en: "Agent status board",
+    pl: "Tablica statusu agentów",
+    fr: "Tableau des agents",
+    es: "Panel de agentes",
+  },
+  "agent.license": {
+    en: "License level",
+    pl: "Poziom licencji",
+    fr: "Niveau de licence",
+    es: "Nivel de licencia",
+  },
+  "agent.trust": {
+    en: "Trust score",
+    pl: "Ocena zaufania",
+    fr: "Score de confiance",
+    es: "Puntuación de confianza",
+  },
+  "voice.mode.on": {
+    en: "voice mode · on",
+    pl: "tryb głosowy · wł.",
+    fr: "mode vocal · activé",
+    es: "modo voz · activo",
+  },
+  "voice.mode.off": {
+    en: "voice mode · off",
+    pl: "tryb głosowy · wył.",
+    fr: "mode vocal · désactivé",
+    es: "modo voz · inactivo",
+  },
+  "voice.mic": {
+    en: "Voice input",
+    pl: "Wejście głosowe",
+    fr: "Entrée vocale",
+    es: "Entrada de voz",
+  },
+  "voice.listening": {
+    en: "listening…",
+    pl: "słucham…",
+    fr: "écoute…",
+    es: "escuchando…",
+  },
+  "voice.unsupported": {
+    en: "Speech API unavailable in this browser.",
+    pl: "API mowy niedostępne w tej przeglądarce.",
+    fr: "API vocale indisponible dans ce navigateur.",
+    es: "API de voz no disponible en este navegador.",
+  },
+  "shortcuts.hint": {
+    en: "F1 style · F4 halt · F6 voice",
+    pl: "F1 styl · F4 stop · F6 głos",
+    fr: "F1 style · F4 arrêt · F6 voix",
+    es: "F1 estilo · F4 paro · F6 voz",
+  },
 };
 
 type I18nState = {
