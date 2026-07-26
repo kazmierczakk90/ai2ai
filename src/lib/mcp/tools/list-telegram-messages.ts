@@ -28,7 +28,7 @@ export default defineTool({
               : msgs
                   .map(
                     (m) =>
-                      `[${m.received_at}] ${m.from ?? "?"}: ${m.text ?? ""} — ${m.tokens.length} tag(s)`,
+                      `[${m.ts}] ${m.user_name}: ${m.text} — ${m.tokens.length} tag(s)`,
                   )
                   .join("\n"),
         },
