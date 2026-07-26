@@ -11,7 +11,10 @@ export default defineTool({
     text: z.string().min(1).describe("Raw text (any of EN/PL/FR/ES) to analyze."),
   },
   annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
-  handler: ({ text }) => {
+  handler: ({ text }, ctx) => {
+    if (!ctx.isAuthenticated()) {
+      return { content: [{ type: "text", text: "Not authenticated" }], isError: true };
+    }
     const tokens = tagText(text);
     return {
       content: [

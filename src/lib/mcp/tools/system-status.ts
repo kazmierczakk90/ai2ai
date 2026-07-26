@@ -8,7 +8,10 @@ export default defineTool({
     "Report the KK1 Core Telegram ingestion health: webhook activity, error counter, and number of stored messages.",
   inputSchema: {},
   annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
-  handler: () => {
+  handler: (_input, ctx) => {
+    if (!ctx.isAuthenticated()) {
+      return { content: [{ type: "text", text: "Not authenticated" }], isError: true };
+    }
     const status = {
       webhook_last_ping: store.webhookLastPing,
       webhook_errors: store.webhookErrors,
