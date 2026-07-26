@@ -6,7 +6,7 @@ export default defineTool({
   name: "list_telegram_messages",
   title: "List imported Telegram messages",
   description:
-    "Return the most recent Telegram messages ingested by KK1 Core, including their FUKO tag tokens. Public data — anyone with access to this MCP server can read every imported message.",
+    "Return the most recent Telegram messages ingested by KK1 Core, including their FUKO tag tokens. Requires authentication.",
   inputSchema: {
     limit: z
       .number()
@@ -16,7 +16,10 @@ export default defineTool({
       .describe("How many of the most recent messages to return (1-200)."),
   },
   annotations: { readOnlyHint: true, openWorldHint: false },
-  handler: ({ limit }) => {
+  handler: ({ limit }, ctx) => {
+    if (!ctx.isAuthenticated()) {
+      return { content: [{ type: "text", text: "Not authenticated" }], isError: true };
+    }
     const msgs = store.messages.slice(-limit).reverse();
     return {
       content: [

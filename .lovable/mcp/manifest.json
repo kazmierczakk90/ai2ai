@@ -3,7 +3,11 @@
   "sdk_version": "0.24.0",
   "path": "/mcp",
   "auth": {
-    "type": "none"
+    "type": "oauth",
+    "issuer": "https://yeoiinafvpygglhpbwhn.supabase.co/auth/v1",
+    "accepted_audiences": [
+      "authenticated"
+    ]
   },
   "mcp": {
     "server": {
@@ -40,7 +44,7 @@
       {
         "name": "list_telegram_messages",
         "title": "List imported Telegram messages",
-        "description": "Return the most recent Telegram messages ingested by KK1 Core, including their FUKO tag tokens. Public data — anyone with access to this MCP server can read every imported message.",
+        "description": "Return the most recent Telegram messages ingested by KK1 Core, including their FUKO tag tokens. Requires authentication.",
         "annotations": {
           "readOnlyHint": true,
           "openWorldHint": false
