@@ -1,0 +1,83 @@
+{
+  "version": 1,
+  "sdk_version": "0.24.0",
+  "path": "/mcp",
+  "auth": {
+    "type": "none"
+  },
+  "mcp": {
+    "server": {
+      "name": "kk1-core-mcp",
+      "version": "0.1.0",
+      "title": "KK1 Core MCP"
+    },
+    "tools": [
+      {
+        "name": "fuko_tag_text",
+        "title": "Tag text with FUKO-LANG symbols",
+        "description": "Run the KK1 Core FUKO-LANG tagger over an arbitrary text and return the detected tokens (agent, executable tool, workflow, guardrail, skill, condition) with their character offsets, suggested FUKO form, and confidence.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "text": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Raw text (any of EN/PL/FR/ES) to analyze."
+            }
+          },
+          "required": [
+            "text"
+          ]
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_telegram_messages",
+        "title": "List imported Telegram messages",
+        "description": "Return the most recent Telegram messages ingested by KK1 Core, including their FUKO tag tokens. Public data — anyone with access to this MCP server can read every imported message.",
+        "annotations": {
+          "readOnlyHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "limit": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200,
+              "description": "How many of the most recent messages to return (1-200)."
+            }
+          },
+          "required": [
+            "limit"
+          ]
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "system_status",
+        "title": "KK1 Core system status",
+        "description": "Report the KK1 Core Telegram ingestion health: webhook activity, error counter, and number of stored messages.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {}
+        },
+        "outputSchema": null
+      }
+    ]
+  }
+}
