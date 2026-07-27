@@ -128,17 +128,41 @@ async function call<T>(
 
 // -------- endpoints --------
 
+import { sendChatMessage } from "./chat.functions";
+
 export async function sendMessageToCore(
   payload: SendMessagePayload,
 ): Promise<SendMessageResponse> {
   const t0 = performance.now();
-  const backend = await call<BackendChatResponse>(
-    "/api/v1/chat",
-    "POST",
-    { text: payload.text, session_id: payload.channel },
-    { text_len: payload.text.length, lang: payload.lang, channel: payload.channel },
-  );
+  const request_id = `req-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
+  emit("api.request", "chat/gemini", {
+    request_id,
+    text_len: payload.text.length,
+    lang: payload.lang,
+    channel: payload.channel,
+  });
+
+  // Build a short history from the store (last ~10 turns) in current lang.
+  const state = useKK1Store.getState();
+  const history = state.messages.slice(-10).map((m) => ({
+    role: m.role,
+    text: pickLocalized(m.dialogue, payload.lang),
+  }));
+
+  let backend: BackendChatResponse;
+  try {
+    backend = await sendChatMessage({
+      data: { text: payload.text, lang: payload.lang, history },
+    });
+  } catch (err) {
+    emit("api.error", "chat/gemini", {
+      request_id,
+      message: err instanceof Error ? err.message : String(err),
+    });
+    throw err;
+  }
   const latency_ms = Math.round(performance.now() - t0);
+  emit("api.response", "chat/gemini", { request_id, latency_ms });
 
   const now = new Date().toISOString();
   const user_message: Message = {
