@@ -115,7 +115,7 @@ export function EventLog() {
             {visible.map((e) => (
               <div
                 key={e.id}
-                className="flex items-start gap-2 border-b border-border/40 px-3 py-1 hover:bg-panel-2/40"
+                className="group flex items-start gap-2 border-b border-border/40 px-3 py-1 hover:bg-panel-2/40"
               >
                 <span className="w-16 shrink-0 tabular-nums text-muted-foreground">
                   {e.ts.slice(11, 19)}
@@ -129,6 +129,13 @@ export function EventLog() {
                 <span className="min-w-0 flex-1 truncate text-foreground/80">
                   {JSON.stringify(e.payload)}
                 </span>
+                <button
+                  onClick={() => replay(e.id)}
+                  title="replay event"
+                  className="shrink-0 rounded border border-border px-1 text-[10px] uppercase tracking-widest text-muted-foreground opacity-0 transition-opacity hover:text-foreground group-hover:opacity-100"
+                >
+                  <RotateCcw className="h-3 w-3" />
+                </button>
               </div>
             ))}
           </div>
@@ -137,3 +144,4 @@ export function EventLog() {
     </div>
   );
 }
+
