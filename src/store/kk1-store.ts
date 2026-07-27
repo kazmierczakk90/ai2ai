@@ -281,6 +281,50 @@ export const useKK1Store = create<State>((set, get) => ({
     document.documentElement.style.setProperty("--ring", a.primary);
   },
 
+  focusLayer: null,
+  setFocusLayer: (l) => {
+    set({ focusLayer: l });
+    emit("agent.focus.set", "store.focus", { layer: l });
+  },
+
+  frozenEvolution: false,
+  toggleFrozenEvolution: () => {
+    const next = !get().frozenEvolution;
+    set({ frozenEvolution: next });
+    emit(next ? "evolution.frozen" : "evolution.resumed", "store.evolution", { on: next });
+  },
+
+  maintenanceMode: false,
+  toggleMaintenance: () => {
+    const next = !get().maintenanceMode;
+    set({ maintenanceMode: next });
+    emit("maintenance.toggled", "store.maintenance", { on: next });
+  },
+
+  styleProfile: "calm",
+  setStyleProfile: (p) => {
+    set({ styleProfile: p });
+    emit("style.profile.changed", "store.style", { profile: p });
+  },
+
+  kpi: { sales: 0.82, engagement: 0.71, performance: 0.93 },
+  setKpi: (k) => {
+    set((s) => ({ kpi: { ...s.kpi, ...k } }));
+    get().checkKpi();
+  },
+  checkKpi: () => {
+    const k = get().kpi;
+    const breaches: { metric: string; value: number; threshold: number }[] = [];
+    if (k.sales < KPI_THRESHOLDS.sales) breaches.push({ metric: "sales", value: k.sales, threshold: KPI_THRESHOLDS.sales });
+    if (k.engagement < KPI_THRESHOLDS.engagement) breaches.push({ metric: "engagement", value: k.engagement, threshold: KPI_THRESHOLDS.engagement });
+    if (k.performance < KPI_THRESHOLDS.performance) breaches.push({ metric: "performance", value: k.performance, threshold: KPI_THRESHOLDS.performance });
+    if (breaches.length) emit("kpi.threshold.breached", "store.kpi", { breaches });
+  },
+
+  influenceWeights: {},
+  setInfluenceWeights: (w) => set({ influenceWeights: w }),
+
+
   messages: [
     {
       id: "m-001",
