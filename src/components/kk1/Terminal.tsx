@@ -93,10 +93,38 @@ const LANG_TAG: Record<string, string> = {
   en: "en-US", pl: "pl-PL", fr: "fr-FR", es: "es-ES",
 };
 
+// Polish / multi-lingual voice command grammar. Matches operator utterances
+// against structured actions before they hit Gemini. Returns { handled, text }
+// where `text` is either the passthrough transcript or a canonicalized command.
+const VOICE_GRAMMAR: Array<{
+  re: RegExp;
+  run: (m: RegExpMatchArray) => { canonical: string; toast?: string };
+}> = [
+  { re: /\b(stop awaryjny|emergency stop|arr[êe]t d'urgence|paro de emergencia)\b/i,
+    run: () => ({ canonical: "!-emergency_stop-", toast: "voice → emergency" }) },
+  { re: /\b(status systemu|system status|statut syst[èe]me|estado del sistema)\b/i,
+    run: () => ({ canonical: "#-system_status- pokaż stan agentów, KPI i kolejki.", toast: "voice → status" }) },
+  { re: /\b(zmie[nń] styl|change style|changer de style|cambiar estilo)\b/i,
+    run: () => ({ canonical: "F1 · style shift", toast: "voice → style" }) },
+  { re: /\baktywuj agenta\s+(@?[\p{L}0-9_\-]+)/iu,
+    run: (m) => ({ canonical: `@-${m[1].replace(/^@-?/, "")} aktywuj`, toast: `voice → agent ${m[1]}` }) },
+  { re: /\b(zatwierd[zź]|approve|approuver|aprobar)\b/i,
+    run: () => ({ canonical: "!-approve- zatwierdź ostatni proces.", toast: "voice → approve" }) },
+];
+
+function applyVoiceGrammar(raw: string): { canonical: string; toast?: string } | null {
+  for (const g of VOICE_GRAMMAR) {
+    const m = raw.match(g.re);
+    if (m) return g.run(m);
+  }
+  return null;
+}
+
 export function Terminal() {
   const messages = useKK1Store((s) => s.messages);
   const append = useKK1Store((s) => s.appendMessage);
   const voiceMode = useKK1Store((s) => s.voiceMode);
+  const triggerEmergency = useKK1Store((s) => s.triggerEmergency);
   const { t, lang } = useI18n();
   const [draft, setDraft] = useState("");
   const [listening, setListening] = useState(false);
@@ -125,10 +153,25 @@ export function Terminal() {
   const submit = async (text?: string) => {
     const txt = (text ?? draft).trim();
     if (!txt) return;
+    // Voice grammar: intercept canonical operator commands
+    const matched = applyVoiceGrammar(txt);
+    if (matched) {
+      emit("voice.command.matched", "terminal.grammar", { raw: txt, canonical: matched.canonical });
+      if (matched.canonical.startsWith("!-emergency_stop")) {
+        triggerEmergency();
+        setDraft("");
+        return;
+      }
+      // Otherwise, submit the canonicalized form
+      setDraft("");
+      return void submitRaw(matched.canonical);
+    }
     setDraft("");
+    return void submitRaw(txt);
+  };
+
+  const submitRaw = async (txt: string) => {
     const activeChannel = useKK1Store.getState().activeChannel;
-    // Optimistically append the user message immediately; the API proxy also
-    // returns it (with a server-assigned id) plus a system response.
     try {
       const res = await sendMessageToCore({ text: txt, lang, channel: activeChannel });
       append(res.user_message);
@@ -142,12 +185,18 @@ export function Terminal() {
       });
     }
     requestAnimationFrame(() => {
-      scroller.current?.scrollTo({
-        top: scroller.current.scrollHeight,
-        behavior: "smooth",
-      });
+      scroller.current?.scrollTo({ top: scroller.current.scrollHeight, behavior: "smooth" });
     });
   };
+
+  // F2 dispatches "kk1:voice-start" — activate the mic on that event.
+  useEffect(() => {
+    const onVoice = () => toggleMic();
+    window.addEventListener("kk1:voice-start", onVoice);
+    return () => window.removeEventListener("kk1:voice-start", onVoice);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lang]);
+
 
   const toggleMic = () => {
     const Ctor = getRecognitionCtor();
