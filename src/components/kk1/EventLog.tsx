@@ -18,6 +18,7 @@ const TYPE_COLOR: Record<BusEventType, string> = {
   "api.request":          "text-muted-foreground",
   "api.response":         "text-fuko-func",
   "api.error":            "text-fuko-guard",
+  "process.approved":     "text-primary",
 };
 
 export function EventLog() {
