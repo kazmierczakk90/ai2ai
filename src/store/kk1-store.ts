@@ -142,6 +142,11 @@ const ACCENTS: { name: string; primary: string }[] = [
 
 // -------------------- Store --------------------
 
+export type KPI = { sales: number; engagement: number; performance: number };
+export type StyleProfile = "calm" | "focused" | "urgent";
+
+export const KPI_THRESHOLDS = { sales: 0.7, engagement: 0.6, performance: 0.85 };
+
 type State = {
   activeChannel: string;
   channels: { id: string; label: string; status: "live" | "idle" | "sealed" }[];
@@ -156,12 +161,31 @@ type State = {
   selectAgent: (id: string | null) => void;
   pulseAgents: () => void;
 
+  focusLayer: AgentLayer | null;
+  setFocusLayer: (l: AgentLayer | null) => void;
+
   voiceMode: boolean;
   toggleVoiceMode: () => void;
 
   emergencyStop: boolean;
   triggerEmergency: () => void;
   clearEmergency: () => void;
+
+  frozenEvolution: boolean;
+  toggleFrozenEvolution: () => void;
+
+  maintenanceMode: boolean;
+  toggleMaintenance: () => void;
+
+  styleProfile: StyleProfile;
+  setStyleProfile: (p: StyleProfile) => void;
+
+  kpi: KPI;
+  setKpi: (k: Partial<KPI>) => void;
+  checkKpi: () => void;
+
+  influenceWeights: Record<string, number>;
+  setInfluenceWeights: (w: Record<string, number>) => void;
 
   accentIndex: number;
   cycleAccent: () => void;
