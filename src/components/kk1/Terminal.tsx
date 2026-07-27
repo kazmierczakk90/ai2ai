@@ -186,6 +186,9 @@ export function Terminal() {
         <span className="rounded border border-border px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">
           {t("term.channel")}: core.command
         </span>
+        <span className="rounded border border-primary/40 bg-primary/10 px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-widest text-primary">
+          gemini · process-designer
+        </span>
         {voiceMode && (
           <span className="flex items-center gap-1 rounded border border-fuko-func/40 bg-fuko-func-bg px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-widest text-fuko-func">
             <Volume2 className="h-3 w-3" /> {t("voice.mode.on")}
