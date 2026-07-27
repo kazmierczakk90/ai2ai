@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowUp, Mic, MicOff, Terminal as TerminalIcon, Volume2 } from "lucide-react";
+import { ArrowUp, Mic, MicOff, Pencil, Terminal as TerminalIcon, Volume2 } from "lucide-react";
 import { pickLocalized, useKK1Store, type Message } from "@/store/kk1-store";
 import { useI18n } from "@/i18n/i18n";
 import { FukoText } from "./FukoText";
@@ -7,17 +7,23 @@ import { DeepReasoning } from "./DeepReasoning";
 import { stripFuko } from "./ShortcutManager";
 import { pzk } from "@/lib/pzk";
 import { sendMessageToCore } from "@/lib/api";
+import { emit } from "@/lib/event-bus";
+import { ProcessEditor, extractProcessBlock, parseProcess } from "./ProcessEditor";
 
 function ts(iso: string) {
   const d = new Date(iso);
   return d.toISOString().slice(11, 19);
 }
 
-function MessageRow({ m }: { m: Message }) {
+function MessageRow({ m, onApproveProcess }: { m: Message; onApproveProcess: (text: string) => void }) {
   const expanded = useKK1Store((s) => !!s.expanded[m.id]);
   const toggle = useKK1Store((s) => s.toggleExpanded);
   const { t, lang } = useI18n();
+  const [editing, setEditing] = useState(false);
   const isUser = m.role === "user";
+  const dialogueText = pickLocalized(m.dialogue, lang);
+  const processBlock = !isUser ? extractProcessBlock(dialogueText) : null;
+
   return (
     <div className="border-b border-border/60 px-4 py-3 hover:bg-panel/30">
       <div className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
@@ -28,11 +34,32 @@ function MessageRow({ m }: { m: Message }) {
         </span>
         <span className="opacity-40">│</span>
         <span>{isUser ? t("term.tag.ingress") : t("term.tag.dialogue")}</span>
+        {processBlock && !editing && (
+          <button
+            onClick={() => setEditing(true)}
+            className="ml-2 flex items-center gap-1 rounded border border-primary/40 bg-primary/10 px-1.5 py-0.5 text-primary hover:bg-primary/20"
+          >
+            <Pencil className="h-3 w-3" /> edit process
+          </button>
+        )}
         <span className="ml-auto opacity-40">msg::{m.id}</span>
       </div>
       <div className="mt-1.5 text-sm leading-relaxed text-foreground">
-        <FukoText text={pickLocalized(m.dialogue, lang)} />
+        <FukoText text={dialogueText} />
       </div>
+      {processBlock && editing && (
+        <ProcessEditor
+          initial={parseProcess(processBlock.block)}
+          onCancel={() => setEditing(false)}
+          onApprove={(p, serialized) => {
+            setEditing(false);
+            emit("process.approved", "terminal.editor", { name: p.name, steps: p.steps.length });
+            onApproveProcess(
+              `!-zatwierdzono. Uruchom zaktualizowany proces:\n\`\`\`\n${serialized}\n\`\`\``,
+            );
+          }}
+        />
+      )}
       {m.strategic_analysis && (
         <DeepReasoning
           analysis={m.strategic_analysis}
