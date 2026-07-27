@@ -1,67 +1,59 @@
-## Cel
-Nowa zakładka **Chat Import** w KK1 Core: przyjmuje wiadomości z Telegrama (live przez konektor Lovable), backend FastAPI wykonuje auto-tagowanie FUKO na poziomie słów, panel wyświetla wiadomości z inline-podświetleniem "słowo → znacznik".
+# Podłączenie KK1 Core → Gemini Enterprise
 
-## 1. Konektor Telegram
-- Wywołanie `standard_connectors--connect` z `connector_id: telegram` (osobny krok, wymaga potwierdzenia użytkownika).
-- Po podpięciu dostępne env: `LOVABLE_API_KEY`, `TELEGRAM_API_KEY` w runtime.
+W workspace nie ma jeszcze połączenia `gemini_enterprise` — najpierw je linkujemy, potem budujemy warstwę server + UI.
 
-## 2. Backend FastAPI (`backend/main.py`)
-Nowe endpointy:
-- `POST /api/v1/telegram/webhook` — odbiera update'y Telegrama, weryfikuje `X-Telegram-Bot-Api-Secret-Token` (SHA-256 z `TELEGRAM_API_KEY`), zapisuje wiadomość w pamięci procesu (lista + dict po `chat_id`), uruchamia tagger, emituje event.
-- `GET /api/v1/telegram/messages?since=<id>` — long-poll / prosty polling dla frontu; zwraca wiadomości + tagi.
-- `POST /api/v1/telegram/tag` — pojedyncza wiadomość → lista `{start, end, word, tag, confidence, symbol}`.
+## 1. Connector (jedno kliknięcie)
+- Wywołanie `standard_connectors--connect(connector_id: "gemini_enterprise")` — użytkownik wybiera konto GCP, projekt, lokalizację i engine ID w karcie w czacie.
+- Po zlinkowaniu zapisze się `GEMINI_ENTERPRISE_API_KEY` oraz konfiguracja projekt/lokalizacja/engine (odczytane server-side przez `get_connection_configuration`).
 
-Tagger (Pydantic model `TaggedToken`):
-- Tokenizacja + heurystyki + LLM-lite (na start słownik + reguły; strukturalny output gotowy pod swap na model).
-- Mapowanie tagów na 6 symboli FUKO: `agent`, `funkcja`, `proces`, `wytyczne`, `umiejętność`, `warunek`.
+## 2. Wybór trybu zapytań
+KK1 Core to command-center z terminalem + widokiem architektury. Proponuję **oba** endpointy Gemini Enterprise, bo mapują się 1:1 na istniejące widoki:
 
-## 3. Rejestracja webhooka (sandbox, po podpięciu konektora)
-Skrypt uruchamiany raz przez `code--exec`:
-- Wylicz `secret_token = base64url(sha256("telegram-webhook:" + TELEGRAM_API_KEY))`.
-- `POST https://connector-gateway.lovable.dev/telegram/setWebhook` z URL `https://project--<id>-dev.lovable.app/api/public/telegram/webhook` (proxy → lokalny backend przez fetch server route) **albo** bezpośrednio na publiczny tunel FastAPI, jeśli użytkownik go ma. Domyślnie: proxy przez server route TanStack, która forwarduje do `http://localhost:8000`.
+- **`streamAssist`** → Terminal (Dual-Output). Odpowiedzi Gemini + citations lądują jako `dialogue`, a `textGroundingMetadata` + reasoning chunks jako `strategic_analysis` (W0 = query, W1 = grounding decisions, SDA routing = kolejność referencji).
+- **`search`** → nowa mini-sekcja "Grounded Search" w Chat Import / Command (ranked hits z filtrami).
 
-## 4. Frontend — nowa zakładka
-- `src/routes/import.tsx` — nowa trasa `/import` z head() i własnym title/description.
-- `src/components/kk1/Layout.tsx` — dodać link "Chat Import" w topbarze obok "Command" / "Architecture".
-- `src/components/kk1/ChatImport.tsx`:
-  - Lewy panel: lista rozmów (chat_id → ostatnia wiadomość, licznik, status webhook).
-  - Prawy panel: wiadomości wybranej rozmowy, każda z:
-    - autor, timestamp, surowy tekst,
-    - **inline-podświetlenie**: renderer bierze `tokens` z backendu i owija otagowane słowa w kolorowe chipy (te same style co `FukoText`, ale bazowane na offsetach zamiast na regexie),
-    - tooltip: `tag`, `confidence`, `symbol`, sugerowana forma FUKO (np. `@-analyzer`).
-  - Toolbar: filtr po tagu, przycisk "Retag" (ponowne wywołanie `/api/v1/telegram/tag`), status webhooka (OK/rekonfiguracja).
+Zaczniemy od `streamAssist` (główny use-case), `search` dodam w tym samym planie jako drugi krok.
 
-## 5. API proxy (`src/lib/api.ts`)
-Nowe funkcje:
-- `fetchTelegramMessages(sinceId?)` → GET `/api/v1/telegram/messages`.
-- `retagMessage(id)` → POST `/api/v1/telegram/tag`.
-- `fetchWebhookStatus()` → GET `/api/v1/telegram/status`.
-Każde wywołanie emituje event na Event Bus (`telegram.messages.fetched`, `telegram.tag.updated`).
+## 3. Server (TanStack)
+Nowy plik `src/lib/gemini.functions.ts`:
+- `askGemini` — `createServerFn({ method: "POST" })` + `.middleware([requireSupabaseAuth])` (żeby chronić credits konta GCP klienta).
+- Wewnątrz handlera: `process.env.LOVABLE_API_KEY` + `process.env.GEMINI_ENTERPRISE_API_KEY`, POST do `https://connector-gateway.lovable.dev/gemini_enterprise/v1alpha/{assistant}:streamAssist`.
+- Parser: **depth-tracking brace parser** dla JSON-array streamu (zgodnie z gemini_enterprise knowledge — NIE NDJSON), merge chunków z 3 przypadkami (superset / partial overlap / append), filtrowanie `thought:true`.
+- Obsługa `state: "SKIPPED"` → zwracam fallback message.
+- Response: `{ answer: string (markdown), references: [{title, uri, snippet}], sessionId }`.
+- Second server fn `geminiSearch` (opcjonalnie w drugiej iteracji) → POST `/v1/{servingConfig}:search`.
 
-## 6. Zustand store
-- `src/store/telegram-store.ts` — `messages[]`, `byChat`, `selectedChatId`, `polling`, `webhookStatus`, akcje `startPolling/stopPolling/select/retag`.
-- Poll co 3 s gdy widok aktywny; auto-stop po opuszczeniu trasy.
+Konfiguracja (project/location/engine) czytana raz na starcie handlera z env wariantów `VITE_LOVABLE_CONNECTOR_GEMINI_ENTERPRISE_*` (non-secret fields z connect'a).
 
-## 7. Renderer inline-tagów
-- `src/components/kk1/TaggedText.tsx` — przyjmuje `text` + `tokens[]`, składa fragmenty w kolejności offsetów, dla każdego tokena renderuje odpowiedni chip (reuse stylów z `FukoText`).
-- Fallback: gdy brak tokenów → zwykły `FukoText` (regex FUKO na już-otagowanych treściach).
+## 4. Frontend
+- `src/lib/api.ts` — nowa funkcja `askGeminiEnterprise(text, sessionId?)` używająca `useServerFn`.
+- `src/store/kk1-store.ts` — akcja `sendToGemini`: emituje event `gemini.query.sent` / `gemini.answer.received`, dopisuje wiadomość do terminala z `strategic_analysis` zbudowanym z citations (grounding references → lista źródeł w Deep Reasoning UI, sekcja "Grounding Sources").
+- `src/components/kk1/Terminal.tsx` — toggle w kompozerze: **[KK1 Core] / [Gemini Enterprise]** (radio pill). Wybór routuje wysyłkę do `sendMessageToCore` albo `askGeminiEnterprise`.
+- `src/i18n/i18n.ts` — nowe klucze `gemini.*` (EN/PL/FR/ES): label toggla, "Grounded by Gemini", "Skipped by Gemini (non-query)", "Sources".
+- Markdown renderer dla `answer` (już mamy `react-markdown`? — jeśli nie, dodaję `react-markdown` w kroku instalacji).
 
-## 8. i18n
-Dodać klucze (EN/PL/FR/ES) dla: "Chat Import", "Conversations", "Retag message", "Webhook active", "No messages yet", tooltipów tagów.
+## 5. Bez zmian
+- MCP server, Telegram ingestion, backend FastAPI, agent board, architecture dashboard — nietknięte.
+- Emergency stop / shortcut manager — nietknięte.
 
-## 9. Bezpieczeństwo
-- Webhook: timing-safe compare secret tokena; walidacja payloadu Pydantic; upsert po `update_id` (idempotencja).
-- Frontend: sanitizacja tekstu (React już escapuje), limity długości w tooltipach.
+## Szczegóły techniczne
 
-## Sekcja techniczna
-- Nowe pliki: `src/routes/import.tsx`, `src/components/kk1/ChatImport.tsx`, `src/components/kk1/TaggedText.tsx`, `src/store/telegram-store.ts`, rozbudowa `backend/main.py`.
-- Zmodyfikowane: `src/components/kk1/Layout.tsx` (nav), `src/lib/api.ts` (3 nowe funkcje), `src/i18n/i18n.ts` (klucze), `src/store/kk1-store.ts` (bez zmian struktury, ewentualnie eventy).
-- Konektor Telegram podpinany osobno przez `standard_connectors--connect` — poproszę Cię o zatwierdzenie karty w chacie.
-- Rejestracja webhooka: pojedyncze `curl` w sandboxie po podpięciu konektora.
+**Endpointy (przez connector gateway):**
+```
+POST /gemini_enterprise/v1alpha/projects/{P}/locations/{L}/collections/default_collection/engines/{E}/assistants/default_assistant:streamAssist
+POST /gemini_enterprise/v1/projects/{P}/locations/{L}/collections/default_collection/engines/{E}/servingConfigs/default_search:search
+```
+Nagłówki: `Authorization: Bearer $LOVABLE_API_KEY`, `X-Connection-Api-Key: $GEMINI_ENTERPRISE_API_KEY`.
 
-## Kolejność wykonania
-1. Podpięcie konektora Telegram (osobna karta).
-2. Rozbudowa backendu FastAPI (webhook + tagger + listy).
-3. Rejestracja webhooka przez gateway.
-4. Frontend: store, API, komponenty, trasa, nav, i18n.
-5. Test end-to-end: wysłanie wiadomości do bota → pojawia się w `/import` z podświetlonymi tagami.
+**Body streamAssist (multi-turn):**
+```json
+{ "query": {"text": "..."}, "toolsSpec": {"vertexAiSearchSpec": {}}, "session": "<optional path>" }
+```
+
+**Ograniczenia (z knowledge Gemini Enterprise):**
+- Akcje (send email, create issue) są dostępne tylko w konsoli GCP, nie przez API — nie wystawiamy tego w UI.
+- Website data stores nie działają w Gemini Enterprise search/assistant.
+- Billing idzie na projekt GCP klienta (nie Lovable).
+
+## Do potwierdzenia po zatwierdzeniu planu
+Po `connect` odczytam GCP project ID / location / engine ID z konfiguracji połączenia (`get_connection_configuration`) — nie muszę Cię o nie pytać.
