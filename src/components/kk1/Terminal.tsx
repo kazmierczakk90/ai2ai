@@ -233,7 +233,7 @@ export function Terminal() {
 
       <div ref={scroller} className="min-h-0 flex-1 overflow-y-auto">
         {messages.map((m) => (
-          <MessageRow key={m.id} m={m} />
+          <MessageRow key={m.id} m={m} onApproveProcess={submit} />
         ))}
       </div>
 
