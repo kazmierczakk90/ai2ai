@@ -22,7 +22,8 @@ export type BusEventType =
   | "emergency.cleared"
   | "api.request"
   | "api.response"
-  | "api.error";
+  | "api.error"
+  | "process.approved";
 
 export type BusEvent<P = unknown> = {
   id: string;
