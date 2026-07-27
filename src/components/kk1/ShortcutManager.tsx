@@ -162,7 +162,7 @@ function pzkNote(
   process: string,
   agent: string,
   severity: "info" | "success" | "warn" | "error",
-  lang: ReturnType<typeof useI18n>["lang"],
+  lang: "en" | "pl" | "fr" | "es",
 ) {
   pzk(
     {
