@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from "react";
-import { ChevronDown, ChevronUp, Pause, Play, Trash2, Radio } from "lucide-react";
+import { ChevronDown, ChevronUp, Pause, Play, Trash2, Radio, RotateCcw, Download } from "lucide-react";
 import { useEventBus, type BusEventType } from "@/lib/event-bus";
 
-const TYPE_COLOR: Record<BusEventType, string> = {
+const TYPE_COLOR: Partial<Record<BusEventType, string>> = {
   "message.sent":         "text-fuko-cond",
   "message.received":     "text-primary",
   "action.queued":        "text-fuko-work",
@@ -10,15 +10,27 @@ const TYPE_COLOR: Record<BusEventType, string> = {
   "trust.score.updated":  "text-fuko-skill",
   "agent.status.changed": "text-muted-foreground",
   "agent.selected":       "text-primary",
+  "agent.focus.set":      "text-primary",
+  "agent.recalibrate":    "text-fuko-cond",
   "expert.assigned":      "text-fuko-skill",
   "voice.mode.toggled":   "text-fuko-func",
+  "voice.command.matched":"text-fuko-func",
   "accent.cycled":        "text-fuko-work",
+  "style.profile.changed":"text-fuko-skill",
   "emergency.triggered":  "text-fuko-guard",
   "emergency.cleared":    "text-fuko-func",
+  "evolution.frozen":     "text-fuko-cond",
+  "evolution.resumed":    "text-fuko-func",
+  "maintenance.toggled":  "text-fuko-work",
+  "sda.route":            "text-primary",
+  "kpi.threshold.breached": "text-fuko-guard",
+  "influence.rebalanced": "text-fuko-skill",
   "api.request":          "text-muted-foreground",
   "api.response":         "text-fuko-func",
   "api.error":            "text-fuko-guard",
   "process.approved":     "text-primary",
+  "bus.replay":           "text-fuko-work",
+  "bus.snapshot":         "text-fuko-skill",
 };
 
 export function EventLog() {
@@ -26,6 +38,8 @@ export function EventLog() {
   const paused = useEventBus((s) => s.paused);
   const setPaused = useEventBus((s) => s.setPaused);
   const clear = useEventBus((s) => s.clear);
+  const replay = useEventBus((s) => s.replay);
+  const snapshot = useEventBus((s) => s.snapshot);
   const [open, setOpen] = useState(false);
   const [filter, setFilter] = useState("");
   const scroller = useRef<HTMLDivElement>(null);
@@ -79,12 +93,20 @@ export function EventLog() {
               {paused ? "resume" : "pause"}
             </button>
             <button
+              onClick={() => snapshot()}
+              title="F10 snapshot"
+              className="flex h-6 items-center gap-1 rounded border border-border bg-panel-2 px-2 font-mono text-[10px] uppercase tracking-widest text-muted-foreground hover:text-foreground"
+            >
+              <Download className="h-3 w-3" /> snapshot
+            </button>
+            <button
               onClick={clear}
               className="flex h-6 items-center gap-1 rounded border border-border bg-panel-2 px-2 font-mono text-[10px] uppercase tracking-widest text-muted-foreground hover:text-foreground"
             >
               <Trash2 className="h-3 w-3" /> clear
             </button>
           </div>
+
 
           <div ref={scroller} className="min-h-0 flex-1 overflow-y-auto font-mono text-[11px]">
             {visible.length === 0 && (
@@ -93,7 +115,7 @@ export function EventLog() {
             {visible.map((e) => (
               <div
                 key={e.id}
-                className="flex items-start gap-2 border-b border-border/40 px-3 py-1 hover:bg-panel-2/40"
+                className="group flex items-start gap-2 border-b border-border/40 px-3 py-1 hover:bg-panel-2/40"
               >
                 <span className="w-16 shrink-0 tabular-nums text-muted-foreground">
                   {e.ts.slice(11, 19)}
@@ -107,6 +129,13 @@ export function EventLog() {
                 <span className="min-w-0 flex-1 truncate text-foreground/80">
                   {JSON.stringify(e.payload)}
                 </span>
+                <button
+                  onClick={() => replay(e.id)}
+                  title="replay event"
+                  className="shrink-0 rounded border border-border px-1 text-[10px] uppercase tracking-widest text-muted-foreground opacity-0 transition-opacity hover:text-foreground group-hover:opacity-100"
+                >
+                  <RotateCcw className="h-3 w-3" />
+                </button>
               </div>
             ))}
           </div>
@@ -115,3 +144,4 @@ export function EventLog() {
     </div>
   );
 }
+

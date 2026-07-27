@@ -24,8 +24,9 @@ import {
   Loader2,
   Clock,
 } from "lucide-react";
-import { useKK1Store, pickLocalized } from "@/store/kk1-store";
+import { useKK1Store, pickLocalized, KPI_THRESHOLDS } from "@/store/kk1-store";
 import { useI18n } from "@/i18n/i18n";
+import { Gauge } from "lucide-react";
 
 // ---------------- Panel shell ----------------
 
@@ -505,25 +506,119 @@ function MetricRow({
   );
 }
 
+// ---------------- KPI Guardrails ----------------
+
+function KpiGuardrails() {
+  const kpi = useKK1Store((s) => s.kpi);
+  const setKpi = useKK1Store((s) => s.setKpi);
+  const rows: Array<{ key: keyof typeof kpi; label: string; threshold: number }> = [
+    { key: "sales",       label: "sales",       threshold: KPI_THRESHOLDS.sales },
+    { key: "engagement",  label: "engagement",  threshold: KPI_THRESHOLDS.engagement },
+    { key: "performance", label: "performance", threshold: KPI_THRESHOLDS.performance },
+  ];
+  return (
+    <Panel icon={Gauge} title="KPI Guardrails" subtitle="thresholds · live breach alerts">
+      <div className="space-y-2 p-3">
+        {rows.map((r) => {
+          const v = kpi[r.key];
+          const breach = v < r.threshold;
+          const pct = Math.round(v * 100);
+          const thrPct = Math.round(r.threshold * 100);
+          return (
+            <div key={r.key}>
+              <div className="flex items-center justify-between font-mono text-[10px] uppercase tracking-widest">
+                <span className={breach ? "text-fuko-guard" : "text-muted-foreground"}>{r.label}</span>
+                <span className={breach ? "text-fuko-guard" : "text-fuko-func"}>
+                  {pct}% <span className="opacity-50">/ min {thrPct}%</span>
+                </span>
+              </div>
+              <div className="relative mt-1 h-2 w-full overflow-hidden rounded bg-panel-2">
+                <div
+                  className={`h-full ${breach ? "bg-fuko-guard" : "bg-fuko-func"}`}
+                  style={{ width: `${pct}%` }}
+                />
+                <div
+                  className="absolute top-0 h-full w-px bg-foreground/60"
+                  style={{ left: `${thrPct}%` }}
+                />
+              </div>
+              <input
+                type="range" min={0} max={100} value={pct}
+                onChange={(e) => setKpi({ [r.key]: Number(e.target.value) / 100 } as Partial<typeof kpi>)}
+                className="mt-1 h-1 w-full accent-primary"
+              />
+            </div>
+          );
+        })}
+        <div className="mt-2 rounded border border-border bg-panel-2 p-2 font-mono text-[10px] text-muted-foreground">
+          {rows.some((r) => kpi[r.key] < r.threshold)
+            ? <span className="text-fuko-guard">!-kpi_breach- @controlling · escalation queued</span>
+            : <span className="text-fuko-func">$-kpi_healthy · no breach · @controlling idle</span>}
+        </div>
+      </div>
+    </Panel>
+  );
+}
+
 // ---------------- Grid ----------------
 
+const TABS = [
+  { id: "all",     label: "all engines" },
+  { id: "p0",      label: "P0 · protective" },
+  { id: "p1",      label: "P1 · operational" },
+  { id: "p2",      label: "P2 · self-calibration" },
+  { id: "p3",      label: "P3 · cognitive" },
+  { id: "agi10",   label: "AGI 10.0" },
+] as const;
+
 export function Architecture() {
+  const [tab, setTab] = useState<(typeof TABS)[number]["id"]>("all");
   return (
     <div className="h-full min-h-0 overflow-auto p-3">
-      <div className="mb-3">
-        <h1 className="font-mono text-sm font-semibold uppercase tracking-widest text-foreground">
-          System Architecture & Pillars
-        </h1>
-        <p className="font-mono text-[11px] text-muted-foreground">
-          Five economic-operational engines. Live telemetry across trust, licensing, ROI, execution mesh, and human escalation.
-        </p>
+      <div className="mb-3 flex items-end justify-between gap-3">
+        <div>
+          <h1 className="font-mono text-sm font-semibold uppercase tracking-widest text-foreground">
+            System Architecture & Pillars
+          </h1>
+          <p className="font-mono text-[11px] text-muted-foreground">
+            Five economic-operational engines + KPI guardrails across P0-P3 layers.
+          </p>
+        </div>
+        <div className="flex flex-wrap items-center gap-1">
+          {TABS.map((tt) => (
+            <button
+              key={tt.id}
+              onClick={() => setTab(tt.id)}
+              className={`rounded px-2 py-1 font-mono text-[10px] uppercase tracking-widest ${
+                tab === tt.id
+                  ? "border border-primary/40 bg-primary/10 text-primary"
+                  : "border border-border bg-panel text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              {tt.label}
+            </button>
+          ))}
+        </div>
       </div>
       <div className="grid grid-cols-1 gap-3 xl:grid-cols-6">
-        <div className="xl:col-span-3 min-h-[420px]"><TrustPanel /></div>
-        <div className="xl:col-span-3 min-h-[420px]"><LicensePanel /></div>
-        <div className="xl:col-span-4 min-h-[360px]"><LedgerPanel /></div>
-        <div className="xl:col-span-2 min-h-[360px]"><ExpertPanel /></div>
-        <div className="xl:col-span-6 min-h-[300px]"><ActionMeshPanel /></div>
+        {(tab === "all" || tab === "p0") && (
+          <>
+            <div className="xl:col-span-3 min-h-[420px]"><TrustPanel /></div>
+            <div className="xl:col-span-3 min-h-[420px]"><LicensePanel /></div>
+          </>
+        )}
+        {(tab === "all" || tab === "p1") && (
+          <div className="xl:col-span-4 min-h-[360px]"><LedgerPanel /></div>
+        )}
+        {(tab === "all" || tab === "p2" || tab === "agi10") && (
+          <div className="xl:col-span-2 min-h-[360px]"><KpiGuardrails /></div>
+        )}
+        {(tab === "all" || tab === "p3") && (
+          <div className="xl:col-span-2 min-h-[360px]"><ExpertPanel /></div>
+        )}
+        {(tab === "all" || tab === "p1" || tab === "agi10") && (
+          <div className="xl:col-span-6 min-h-[300px]"><ActionMeshPanel /></div>
+        )}
       </div>
     </div>
   );

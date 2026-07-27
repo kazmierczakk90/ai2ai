@@ -179,6 +179,19 @@ export function Topbar() {
 export function Shell({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     hydrateI18n();
+    let mounted = true;
+    (async () => {
+      const g = await import("@/lib/bridges/guardian-recalibration");
+      const i = await import("@/lib/bridges/influence-loadbalancer");
+      const s = await import("@/lib/bridges/style-memory");
+      if (!mounted) return;
+      g.startGuardianBridge();
+      i.startInfluenceBridge();
+      s.startStyleMemoryBridge();
+    })();
+    return () => {
+      mounted = false;
+    };
   }, []);
   return (
     <div className="flex h-screen w-screen flex-col overflow-hidden bg-background text-foreground">
