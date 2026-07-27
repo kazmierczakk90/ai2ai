@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { ChevronDown, ChevronUp, Pause, Play, Trash2, Radio } from "lucide-react";
+import { ChevronDown, ChevronUp, Pause, Play, Trash2, Radio, RotateCcw, Download } from "lucide-react";
 import { useEventBus, type BusEventType } from "@/lib/event-bus";
 
 const TYPE_COLOR: Partial<Record<BusEventType, string>> = {
