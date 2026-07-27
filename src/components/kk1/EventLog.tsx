@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { ChevronDown, ChevronUp, Pause, Play, Trash2, Radio } from "lucide-react";
 import { useEventBus, type BusEventType } from "@/lib/event-bus";
 
-const TYPE_COLOR: Record<BusEventType, string> = {
+const TYPE_COLOR: Partial<Record<BusEventType, string>> = {
   "message.sent":         "text-fuko-cond",
   "message.received":     "text-primary",
   "action.queued":        "text-fuko-work",
@@ -10,15 +10,27 @@ const TYPE_COLOR: Record<BusEventType, string> = {
   "trust.score.updated":  "text-fuko-skill",
   "agent.status.changed": "text-muted-foreground",
   "agent.selected":       "text-primary",
+  "agent.focus.set":      "text-primary",
+  "agent.recalibrate":    "text-fuko-cond",
   "expert.assigned":      "text-fuko-skill",
   "voice.mode.toggled":   "text-fuko-func",
+  "voice.command.matched":"text-fuko-func",
   "accent.cycled":        "text-fuko-work",
+  "style.profile.changed":"text-fuko-skill",
   "emergency.triggered":  "text-fuko-guard",
   "emergency.cleared":    "text-fuko-func",
+  "evolution.frozen":     "text-fuko-cond",
+  "evolution.resumed":    "text-fuko-func",
+  "maintenance.toggled":  "text-fuko-work",
+  "sda.route":            "text-primary",
+  "kpi.threshold.breached": "text-fuko-guard",
+  "influence.rebalanced": "text-fuko-skill",
   "api.request":          "text-muted-foreground",
   "api.response":         "text-fuko-func",
   "api.error":            "text-fuko-guard",
   "process.approved":     "text-primary",
+  "bus.replay":           "text-fuko-work",
+  "bus.snapshot":         "text-fuko-skill",
 };
 
 export function EventLog() {
