@@ -24,8 +24,9 @@ import {
   Loader2,
   Clock,
 } from "lucide-react";
-import { useKK1Store, pickLocalized } from "@/store/kk1-store";
+import { useKK1Store, pickLocalized, KPI_THRESHOLDS } from "@/store/kk1-store";
 import { useI18n } from "@/i18n/i18n";
+import { Gauge } from "lucide-react";
 
 // ---------------- Panel shell ----------------
 
