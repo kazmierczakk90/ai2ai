@@ -38,6 +38,8 @@ export function EventLog() {
   const paused = useEventBus((s) => s.paused);
   const setPaused = useEventBus((s) => s.setPaused);
   const clear = useEventBus((s) => s.clear);
+  const replay = useEventBus((s) => s.replay);
+  const snapshot = useEventBus((s) => s.snapshot);
   const [open, setOpen] = useState(false);
   const [filter, setFilter] = useState("");
   const scroller = useRef<HTMLDivElement>(null);
@@ -91,12 +93,20 @@ export function EventLog() {
               {paused ? "resume" : "pause"}
             </button>
             <button
+              onClick={() => snapshot()}
+              title="F10 snapshot"
+              className="flex h-6 items-center gap-1 rounded border border-border bg-panel-2 px-2 font-mono text-[10px] uppercase tracking-widest text-muted-foreground hover:text-foreground"
+            >
+              <Download className="h-3 w-3" /> snapshot
+            </button>
+            <button
               onClick={clear}
               className="flex h-6 items-center gap-1 rounded border border-border bg-panel-2 px-2 font-mono text-[10px] uppercase tracking-widest text-muted-foreground hover:text-foreground"
             >
               <Trash2 className="h-3 w-3" /> clear
             </button>
           </div>
+
 
           <div ref={scroller} className="min-h-0 flex-1 overflow-y-auto font-mono text-[11px]">
             {visible.length === 0 && (
