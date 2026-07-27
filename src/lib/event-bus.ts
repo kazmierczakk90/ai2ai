@@ -15,15 +15,27 @@ export type BusEventType =
   | "trust.score.updated"
   | "agent.status.changed"
   | "agent.selected"
+  | "agent.focus.set"
+  | "agent.recalibrate"
   | "expert.assigned"
   | "voice.mode.toggled"
+  | "voice.command.matched"
   | "accent.cycled"
+  | "style.profile.changed"
   | "emergency.triggered"
   | "emergency.cleared"
+  | "evolution.frozen"
+  | "evolution.resumed"
+  | "maintenance.toggled"
+  | "sda.route"
+  | "kpi.threshold.breached"
+  | "influence.rebalanced"
   | "api.request"
   | "api.response"
   | "api.error"
-  | "process.approved";
+  | "process.approved"
+  | "bus.replay"
+  | "bus.snapshot";
 
 export type BusEvent<P = unknown> = {
   id: string;
@@ -40,6 +52,8 @@ type BusState = {
   emit: <P>(type: BusEventType, source: string, payload?: P) => BusEvent<P>;
   clear: () => void;
   setPaused: (p: boolean) => void;
+  replay: (id: string) => void;
+  snapshot: () => string;
 };
 
 let seq = 0;
@@ -68,6 +82,39 @@ export const useEventBus = create<BusState>((set, get) => ({
   },
   clear: () => set({ events: [] }),
   setPaused: (p) => set({ paused: p }),
+  replay: (id) => {
+    const src = get().events.find((e) => e.id === id);
+    if (!src) return;
+    get().emit("bus.replay", "eventlog.replay", {
+      original_id: src.id,
+      type: src.type,
+      source: src.source,
+      payload: src.payload,
+    });
+  },
+  snapshot: () => {
+    const events = get().events;
+    const json = JSON.stringify(
+      { taken_at: new Date().toISOString(), count: events.length, events },
+      null,
+      2,
+    );
+    get().emit("bus.snapshot", "eventlog.snapshot", { count: events.length });
+    if (typeof window !== "undefined") {
+      try {
+        const blob = new Blob([json], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `kk1-event-snapshot-${Date.now()}.json`;
+        a.click();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+      } catch {
+        /* ignore */
+      }
+    }
+    return json;
+  },
 }));
 
 // Non-hook accessor for use inside other stores / async services.
