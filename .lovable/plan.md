@@ -1,81 +1,44 @@
-# Plan: Katalog umiejętności KK1 Core + procesy per warstwa
 
-## Cel
-Zebrać w jedno miejsce WSZYSTKIE umiejętności (skille) opisane w źródłach projektu, policzyć je, pogrupować per warstwa architektury KK1, a następnie zaprojektować **5 procesów PDL** — po jednym na każdą warstwę — które te skille realnie wykorzystują.
+# Plan: KK1 Terminal podłączony do Gemini
 
-## Źródła prawdy (do przeczytania w fazie inwentaryzacji)
-1. `KK1_MASTER_ARCHITECTURE.md` (Google Doc, ~5131 linii) — pełne profile agentów, ich `capabilities` i `skills`.
-2. `#AKRUSZ GEMINI` (Google Sheet) — katalog ~50 agentów z przypisanymi skillami/rolami i protokół `#tabela`.
-3. Skill `karol-process-designer` (już w repo) — bazowe 10 skilli operacyjnych: `kb-query`, `kb-write`, `agent-ask`, `agent-broadcast`, `opinion-engine`, `agent-consensus`, `chain-of-thought-log`, `task-delegation`, `context-sync`, `realtime-monitor`.
-4. Kod repo (`src/store/kk1-store.ts`, `AgentBoard.tsx`, `telegram-store.server.ts`) — skille faktycznie zaimplementowane w UI/backendzie.
+Cel: okno czatu w KK1 (`/` Terminal) wysyła wiadomości do modelu Gemini przez Lovable AI Gateway zamiast do lokalnego FastAPI `http://localhost:8000`. Odpowiedzi renderowane bez zmian w Dual-Output Terminal z FUKO-LANG i Deep Reasoning.
 
-## Deliverable (2 pliki)
+## Zakres
 
-### 1. `/mnt/documents/kk1-skills-catalog.md` — Pełny katalog
-Struktura:
-```
-# Katalog umiejętności KK1 Core
+- Tylko warstwa czatu (`sendMessageToCore`). Bez zmian w: MCP, Telegram, Architecture, AgentBoard, Emergency Stop, i18n, FUKO parser.
+- Model: `google/gemini-3.1-pro-preview` (odpowiednik `gpt-5.5` z katalogu). Bez fast mode (Gemini nie wspiera).
+- Domyślnie: bez streamingu (jedno wywołanie, jedna odpowiedź) — pasuje do obecnego UI.
 
-## Podsumowanie liczbowe
-- Skille z KK1_MASTER_ARCHITECTURE.md: N1
-- Skille z #AKRUSZ GEMINI:              N2
-- Skille z karol-process-designer:      10
-- Skille zaimplementowane w kodzie:     N3
-- Unikalne skille (po deduplikacji):    N
-- Agenci ogółem:                        47
+## Zmiany
 
-## Skille per warstwa (5 warstw KK1)
-### Warstwa Cognitive
-| Skill | Opis | Input | Output | Właściciel (agent) | Źródło |
-### Warstwa System
-...
-### Warstwa Execution
-...
-### Warstwa Emotional
-...
-### Warstwa Strategic
-...
+1. **Nowy server function** `src/lib/chat.functions.ts`
+   - `sendChatMessage({ text, lang, history })` z `createServerFn({ method: "POST" })`.
+   - Handler: czyta `process.env.LOVABLE_API_KEY`, tworzy provider przez helper z `ai-sdk-lovable-gateway`, woła `generateText` z:
+     - system prompt: rola KK1 Core (FUKO-LANG, warstwy, styl command-center), instrukcja odpowiadania w języku `lang`, wymuszenie użycia symboli `@- #- $- !- /- &-` gdy adekwatne.
+     - `messages`: krótka historia (ostatnie ~10) + nowy user turn.
+     - `Output.object` (constraint-free) ze schemą `{ dialogue, w0_summary, w1_identity, fuko_decision, scoring: {confidence,risk,empathy,focus,energy,curiosity}, sda_routing: string[] }`; guard `NoObjectGeneratedError` z fallbackiem: cały tekst → `dialogue`, puste pola analytics.
+   - Zwraca DTO w kształcie `BackendChatResponse` (dialogue + strategic_analysis) — istniejący adapter w `api.ts` przełoży go dalej.
 
-## Mapa: agent → skille
-(tabela 47 agentów × ich skille)
+2. **Nowy helper providera** `src/lib/ai-gateway.server.ts`
+   - Dokładnie snippet z `ai-sdk-lovable-gateway` (`createLovableAiGatewayProvider`, run-id fetch). Import z `@ai-sdk/openai-compatible` i `ai`.
 
-## Skille duplikaty / aliasy
-(gdy ten sam skill występuje pod różnymi nazwami w źródłach)
-```
+3. **`src/lib/api.ts`**
+   - `sendMessageToCore` przełączone z `fetch("http://localhost:8000/api/v1/chat")` na `useServerFn(sendChatMessage)` wywołany imperatywnie (import funkcji i wywołanie `sendChatMessage({ data: {...} })` — TanStack pozwala na to spoza komponentu).
+   - Zbudowanie `history` z aktualnych `messages` w `useKK1Store` (bierze `pickLocalized` do stringa w bieżącym `lang`).
+   - Adapter DTO → `Message` / `StrategicAnalysis` bez zmian.
+   - Event bus emit zachowany (`api.request`, `api.response`, `api.error`), tylko z etykietą `chat/gemini`.
 
-### 2. `/mnt/documents/kk1-processes-per-layer.md` — 5 procesów PDL
+4. **Zależności**
+   - `bun add ai @ai-sdk/openai-compatible zod` (zod już jest).
+   - `ai_gateway--create` — upewnić się, że `LOVABLE_API_KEY` istnieje.
 
-Każdy proces w formacie z `karol-process-designer` (KROK 4): nazwa, trigger, czas, kroki numerowane, typ (SEQ/PAR/COND/LOOP/GATE), agent → skill, wejście/wyjście, exit conditions.
+5. **Bez zmian**
+   - Terminal.tsx, DeepReasoning, FUKO parser, i18n, kontrakty typów Message/StrategicAnalysis.
+   - Backend FastAPI zostaje jako artefakt (`backend/main.py`), po prostu nieużywany przez czat.
 
-**Proces 1 — Warstwa Cognitive: `$deep-reasoning-consensus`**
-Trigger: nowa decyzja strategiczna. Wykorzystuje: `kb-query`, `opinion-engine`, `agent-consensus`, `chain-of-thought-log`. Aktorzy: `@analyzer`, `@critic`, `@evaluator`, `@mentor`, `@ceo`. Wzorzec: SEQ → PAR (3 opinie) → COND (consensus > 0.7?) → LOOP (jeśli nie) → SEQ (zapis).
+## Techniczne uwagi
 
-**Proces 2 — Warstwa System: `$fuko-ingestion-pipeline`**
-Trigger: przychodząca wiadomość Telegram/webhook. Wykorzystuje: `/intent-extraction`, `/protocol-parsing`, `#parse_intent`, `context-sync`, `realtime-monitor`. Aktorzy: `@fuko_flow_agent`, `@ram_agent`, `@router`, `@guardian-core`. Wzorzec: SEQ×4 → GATE (guardrail check) → SEQ.
-
-**Proces 3 — Warstwa Execution: `$arbitrage-decision-loop`**
-Trigger: cron `*/15 min`. Wykorzystuje: `/market-analysis`, `#calculate_roi`, `task-delegation`, `kb-write`. Aktorzy: `@arbitrage_agent`, `@data-ops`, `@todo`, `@impact-tracker`. Wzorzec: LOOP (skan) → COND (ROI > 15%) → SEQ (execute) → SEQ (log).
-
-**Proces 4 — Warstwa Emotional: `$empathy-6d-scoring`**
-Trigger: nowa wiadomość operatora. Wykorzystuje: `opinion-engine`, `/natural-language-routing`, `agent-ask`. Aktorzy: `@mentor`, `@narrator`, `@support`, `@voice-core`. Wzorzec: PAR (6 wymiarów: Confidence/Risk/Empathy/Focus/Energy/Curiosity) → SEQ (agregat) → COND (energy < 0.3 → route do @mentor).
-
-**Proces 5 — Warstwa Strategic: `$ceo-weekly-orchestration`**
-Trigger: cron poniedziałek 09:00. Wykorzystuje: `kb-query`, `agent-broadcast`, `agent-consensus`, `chain-of-thought-log`, `task-delegation`, `kb-write`. Aktorzy: `@ceo`, `@product`, `@controlling`, `@architect`, `@passport`. Wzorzec: SEQ (audyt) → PAR (opinie 4 agentów) → GATE (zatwierdzenie) → SEQ×3 (roadmap, ADR, delegacja).
-
-## Kroki wykonania (w trybie build)
-
-1. **Fetch** — pobrać przez connector `google_drive`/`google_sheets` pełny tekst `KK1_MASTER_ARCHITECTURE.md` i pełną zawartość arkusza `#AKRUSZ GEMINI` (wszystkie zakładki, nie tylko podsumowanie).
-2. **Parse** — wyciągnąć skille regexem/strukturalnie z profili agentów (`skills:`, `capabilities:`, `/-nazwa`, `#-nazwa-`).
-3. **Deduplikacja** — połączyć aliasy (np. `intent-extraction` vs `/intent-extraction` vs `#parse_intent`).
-4. **Klasyfikacja per warstwa** — użyć mapowania agent→warstwa z `src/store/kk1-store.ts` (już mamy 47 agentów × 5 warstw) i zdziedziczyć warstwę skilla po jego głównym właścicielu.
-5. **Wygenerować oba pliki .md** do `/mnt/documents/` i wystawić jako `<presentation-artifact>`.
-6. **Podsumować** — podać końcową liczbę unikalnych skilli (N) w chacie.
-
-## Czego NIE robię (w tym planie)
-- Nie zmieniam UI ani kodu aplikacji — to czysty deliverable dokumentowy.
-- Nie uruchamiam procesów — projektuję je zgodnie z `karol-process-designer` KROK 4 (prezentacja przed uruchomieniem).
-- Nie tworzę procesu per skill (Twój wybór: "zgrupowane per warstwa" = 5 procesów).
-
-## Ryzyka / założenia
-- Realną liczbę N poznam dopiero po sparsowaniu Google Doc (5131 linii). Szacunek wstępny: **35–60 unikalnych skilli** po deduplikacji.
-- Jeśli `#AKRUSZ GEMINI` ma zakładki, których wcześniej nie odczytałem, liczba może wzrosnąć — plik zostanie odczytany w całości w kroku 1.
+- Server function jest publiczna (bez `requireSupabaseAuth`) — chat nie wymaga logowania. Rate-limit: brak własnego (zgodnie z rules); polegamy na gateway.
+- Błędy: 429/402/5xx z gateway → rzucamy `Error` z message; Terminal ma już fallback catch (dopisuje user message lokalnie). Rozszerzę fallback, żeby pokazać jednorazowy system-message z komunikatem błędu (dialogue = "⚠️ Gateway error: …").
+- Multi-język: `lang` przekazany do system promptu ("Reply in {en|pl|fr|es}."); wszystkie 4 języki obsłużone bez tłumaczeń po stronie klienta.
+- `strategic_analysis.sda_routing` z modelu (lista nazw agentów jak `@ceo`, `@fuko_flow_agent`) — adapter już mapuje na obiekty z `latency_ms`.
