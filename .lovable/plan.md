@@ -1,86 +1,57 @@
 
-# Analiza Drive → propozycja aktualizacji KK1 Core
+## Analiza uploadów
 
-## Co jest w folderze `repo-audit-target`
+| Plik | Zawartość | Wykorzystanie |
+|---|---|---|
+| `agent_code_system_prompt.md.docx` | Spec agenta **@code** — Edukator/Egzekutor z formatem `[EDU][PLAN][KROK][NEXT]` + tryby `/cisza /deep /schema /skip /why`, kontekst KK1 Core v2.0 (W0-W6, FUKO-FLOW 7-punktowy, 6D weights: leverage 0.25, monopoly 0.20, compound 0.20, ecosystem 0.15, data 0.10, asset 0.10) | Nowy agent-tryb w Terminalu |
+| `w2_routing.py` | **SDA (Strategic Decision Architecture) Router** — macierz decyzyjna: 15 reguł w 5 domenach (Ingestion/Decisions/Execution/Memory/Optimization), routing 3-etapowy: exact `@agent` → keyword scoring → FUKO fallback, per-reguła: `domain/actor/impact_area(W0-W6)/priority(1-10)/strategy(leverage\|monopol\|compound\|ecosystem\|data\|asset)` | Warstwa preprocessingu wiadomości przed Gemini |
+| `agent_orchestrator.py` | State-machine agentów: `REGISTERED→IDLE→ASSIGNED→RUNNING→COMPLETED/ERROR→REPORTING→ARCHIVED` + heartbeat 5s + retry (max 3) + auto-restart po 16s bezczynności | Rozszerzenie AgentBoard |
+| `Architektura_technologiczna.docx` | **Uszkodzony** (nie dekompresuje) | Pominąć, poprosić user o re-upload jeśli krytyczny |
 
-Kluczowe dokumenty (Google Docs, zaciągnięte i przeczytane):
+## Trzy propozycje aktualizacji
 
-- **SYSTEM_ANALYSIS_REPORT.md** — audyt legacy „Karol‑Core AGI” (warstwy P0‑P3, AGI 10.0). Wskazuje 8 problemów (duplikacja orchestration engine, izolowane P0‑P3, brak Event Busa, brak unified state, brak scheduled telemetry, brak scenariuszy).
-- **OPTIMIZATION_SUMMARY.md** — docelowa architektura: `eventBus`, `centralStateManager`, **3 bridges**: Guardian↔Recalibration, Influence↔LoadBalancer, Style↔Memory + replay eventów i time‑travel debug.
-- **FUNCTIONAL_SPECIFICATION.md** — pełny kontrakt UX: **F1‑F12**, **Ctrl+1..5**, **Alt+S/A/R/M/V**, **Ctrl+Shift+E/R/S**, komendy głosowe PL (`aktywuj agenta`, `zmień styl`, `status systemu`, `stop awaryjny`), 4 scenariusze FUKO‑PZK (Senior Health Check, Lead Nurturing, System Optimization, Emergency Response), progi KPI (Sales < 70%, Engagement < 60%, Perf < 85%).
-- COMMANDS.md, karol_core_full_structure, karol_core_71_opisy, manifest.intelligence.karol.md — powielają katalog komend i modułów; nic nowego względem powyższych.
+### 1) SDA Router w preprocessingu wiadomości (największa wartość)
 
-Pliki `.zip`, `.bat`, `.py` (`tts_coqui.py`, `stt_vosk.py`, `decision_engine.py`) to legacy runtime na innym stacku (Python + Vite CRA) — nie migrujemy kodu, tylko wnioski funkcjonalne.
+Warstwa "W2 Routing" analizuje każde wejście operatora **zanim** trafi do Gemini i przypina metadane:
+- **`src/lib/sda/matrix.ts`** — port macierzy z Pythona (15 reguł × 5 domen), typy `SDA_Rule` i `SDARoutingDecision`, słowniki PL/EN keywordów (używam istniejącego `i18n`).
+- **`src/lib/sda/router.ts`** — funkcja `routeSda(input, lang)` z pipeline: exact `@agent` → keyword scoring (Jaccard) → fallback `@system-admin`, próg `0.3`.
+- **`src/lib/chat.functions.ts`** — przed `generateText` wywołujemy `routeSda`, wynik wstrzykujemy do `system` prompt jako `SDA_ROUTING_HINT` (domain, actor, impact_area, priority, strategy, confidence) → Gemini uwzględnia to w `fuko_decision` i `sda_routing`.
+- **`src/components/kk1/DeepReasoning.tsx`** — nowy panel **"SDA Routing Matrix"** (piąty kafelek) pokazujący dopasowaną regułę, confidence bar i routing_type badge.
+- **`src/lib/event-bus.ts`** — nowy typ `sda.decision` emitowany per wiadomość.
+- Persystencja w `localStorage` (namespace `kk1.sda.matrix`) — zastępuje SQLite z Pythona, z możliwością eksportu do JSON.
 
-## Jak to się ma do obecnego KK1 Core
+### 2) Nowy tryb agenta **@code** w Terminalu
 
-Mamy już: FUKO‑LANG parser, Dual‑Output Terminal, Gemini chat + Process Designer + Process Editor, MCP, Telegram ingest, AgentBoard (47 agentów), EventBus + EventLog, Architecture (5 filarów), skróty F1/F4/F6, Emergency overlay, PZK toasty.
+- **`src/lib/agents/code-agent.ts`** — system-prompt agenta `@code` (przetłumaczony z docx) z formatem `[EDU][PLAN][KROK][NEXT]`, trybami `/cisza /deep /schema /skip /why /koniec`, kontekstem W0-W6 i wagami 6D.
+- **`src/lib/chat.functions.ts`** — router promptów: jeśli wiadomość zaczyna się od `@code` → używa `codeAgentSystemPrompt` zamiast domyślnego process-designer, inne zaczyna standardowo.
+- **`src/store/kk1-store.ts`** — nowy stan `codeSession: { schema: Step[], currentStep, silentMode }`, akcje `markStepDone/skipStep/toggleSilent`.
+- **`src/components/kk1/Terminal.tsx`** — pasek trybu "AGENT: @code" gdy aktywny, licznik kroków `3/12`, przyciski `/deep /why /cisza`.
+- **`src/components/kk1/CodeSchemaPanel.tsx`** (nowy) — sidebar/tab pokazujący `schemat_NAZWA.md` z checkboxami `[DONE]/[NOW]/[TODO]/[SKIP]/[BLOCKED]`.
 
-Braki względem specyfikacji z Drive, które warto wprowadzić:
+### 3) State-Machine w AgentBoard
 
-1. Skróty klawiszowe pokryte w ~20%.
-2. Głos: tylko `SpeechRecognition` free‑form, bez grammar komend PL.
-3. EventBus jest logowany, ale bez replay/time‑travel ani mostków cross‑layer.
-4. Brak progów KPI i auto‑alertów.
-5. Brak scenariuszy FUKO‑PZK jednym klikiem.
-6. Architecture pokazuje 5 filarów, ale bez zakładek P0‑P3 / AGI 10.0.
+- **`src/store/kk1-store.ts`** — rozszerzenie typu `Agent`:
+  ```ts
+  state: 'REGISTERED'|'IDLE'|'ASSIGNED'|'RUNNING'|'COMPLETED'|'ERROR'|'REPORTING'|'ARCHIVED';
+  lastHeartbeat: number;
+  retries: number;
+  maxRetries: 3;
+  ```
+- **`src/lib/orchestrator.ts`** — port `Orchestrator` z Pythona: `useEffect`-driven heartbeat pulse co 5s + `monitor_agents` co 10s (auto-restart po 16s stale). Uruchamiany w `Shell`.
+- **`src/lib/event-bus.ts`** — nowe typy: `agent.state.transitioned`, `agent.heartbeat.missed`, `agent.retry`.
+- **`src/components/kk1/AgentBoard.tsx`** — kolorowe pigułki per-state (7 stanów zamiast 3), tooltip z `lastHeartbeat` i `retries`, animacja pulse przy `RUNNING`.
+- **`src/components/kk1/Architecture.tsx`** — nowy panel **"State Machine Telemetry"** w zakładce AGI 10.0 z live-count per state.
 
-## Propozycja aktualizacji (zakres, do zatwierdzenia)
+## Kolejność wdrożenia
+1. SDA Router (izolowana warstwa, największy zysk analityczny) — 1 batch: `matrix.ts`, `router.ts`, `chat.functions.ts` patch, `DeepReasoning.tsx` panel, event bus, testy.
+2. State-Machine (rozszerza istniejący store i AgentBoard) — 1 batch: store, orchestrator, AgentBoard, event bus.
+3. Agent `@code` (największa zmiana UX, wymaga panelu schematu) — 1 batch: code-agent.ts, chat.functions.ts routing, store session, Terminal UI, CodeSchemaPanel.
 
-### A. Skróty klawiszowe (rozszerzenie `ShortcutManager.tsx`)
+Po każdym batch — `tsgo` typecheck.
 
-Dodać (nie ruszając F1/F4/F6):
-- **F2** Activate Agent (losowy Idle → Processing + PZK), **F3** Freeze Evolution (globalny lock w store), **F5** Refresh (`fetchSystemStatus` + `fetchAgentStatuses`), **F7** Switch Agent (round‑robin), **F8** Optimize (mock KPI sweep), **F9** Generate Report (pobranie ledger + toast), **F10** Backup State (zapis Zustand do `localStorage`), **F11** Maintenance Mode (banner + wyłączenie composera), **F12** System Status (PZK + TTS jeśli Voice Mode).
-- **Ctrl+1..5** — set focus agent: `@ceo`, `@voice-core`, `@guardian-core`, `@router`, `@controlling`.
-- **Alt+S/A/R/M/V** — KPI scan / performance analysis / reset random agent / mic toggle / volume slider.
-- **Ctrl+Shift+E/R/S** — Emergency Shutdown (twardszy niż F4, blokuje input), Force Restart (clear store), Save State.
+## Poza zakresem
+- Backend SQLite (`w2_routing.py` persistuje w `~/.kk1-core-v2/sda_routing.db`) — zastępuję localStorage (frontendowa aplikacja).
+- `Architektura_technologiczna.docx` uszkodzony — pominięty; jeśli krytyczny, poproszę o re-upload po planie.
+- Integracja z Telegram Bot / Crostini deployment z docx `@code` — to instrukcje wdrożeniowe dla operatora, nie funkcje aplikacji web.
 
-Każda akcja emituje event i PZK z 7‑elementową strukturą.
-
-### B. Grammar komend głosowych (`Terminal.tsx`)
-
-Nakładka na istniejące `SpeechRecognition`: przed wysłaniem do Gemini dopasowanie PL/EN regexem do słownika:
-`aktywuj agenta|activate agent`, `zmień styl|style shift`, `status systemu|system status`, `stop awaryjny|emergency stop`. Trafienie → odpowiedni skrót zamiast czatu. Brak trafienia → wysyłka do Gemini bez zmian.
-
-### C. Bridges na EventBusie (`src/lib/bridges/`)
-
-Trzy moduły subskrybujące istniejący `event-bus`:
-- `guardian-recalibration.ts` — na `agent.status.degraded` → emit `agent.recalibrate` + update `trustScore`.
-- `influence-loadbalancer.ts` — na `sda.route` → aktualizacja wag routingu w store (widoczne w AgentBoard jako „influence weight”).
-- `style-memory.ts` — na `chat.style.detected` (dodać emit w `sendMessageToCore`) → zapis profilu stylu użytkownika w store, wykorzystywany w system prompcie kolejnych wywołań Gemini.
-
-### D. Replay i time‑travel w EventLog (`EventLog.tsx`)
-
-Do istniejącego panelu dodać: filtr po typie, przycisk **Replay** (odtwarza ostatnie N eventów w interwałach), przycisk **Snapshot** (dumpuje stan Zustand + eventy do JSON download). Podłączyć pod F10.
-
-### E. KPI Monitor (nowy widget na `Architecture`)
-
-Karta „KPI Guardrails”: 4 mierniki (Sales Conversion, User Engagement, System Performance, Agent Efficiency) z mock‑danymi z `api.ts`. Progi z FUNCTIONAL_SPECIFICATION → automatyczny PZK+toast przy przekroczeniu, event `kpi.threshold.breached`.
-
-### F. FUKO‑PZK Scenariusze (`ShortcutManager` + prosty selector w Topbarze)
-
-Nowy dropdown „Scenarios” → 4 pozycje z FUNCTIONAL_SPECIFICATION (Senior Health Check, Lead Nurturing, System Optimization, Emergency Response). Każdy scenariusz to skrypt sekwencji PZK + eventów odpalanych z opóźnieniami (2‑4 kroki), bez wywołań backendu.
-
-### G. Architecture: zakładki P0‑P3 + AGI 10.0
-
-W `Architecture.tsx` przełączyć z pojedynczej siatki na `Tabs`: **Pillars** (obecne 5), **P0 Guardian**, **P1 Audit**, **P2 Recalibration**, **P3 Cognitive**, **AGI 10.0**. Każda zakładka: 2‑3 karty z mock‑telemetry z `api.ts` (drift score, event throughput, recalibration queue, influence graph mini, autonomy meter).
-
-### H. Zmiany podtrzymujące
-
-- `kk1-store.ts`: dodać `focusAgent`, `frozenEvolution`, `maintenanceMode`, `styleProfile`, `kpi`, `influenceWeights`.
-- `event-bus.ts`: eksport helpera `replay(events, intervalMs)`.
-- `api.ts`: `fetchKpi()`, `runScenario(id)` — czyste mocki, zgodne z konwencją event `api.request/response`.
-- `i18n/i18n.ts`: 4 języki dla nowych etykiet (skróty, KPI, scenariusze).
-
-### Poza zakresem (świadomie pomijamy)
-
-- Migracja legacy Pythona (`stt_vosk.py`, `tts_coqui.py`, `decision_engine.py`) — nasz stack to TanStack Start + Web Speech API, nie Node/Python worker.
-- „OrchestrationEngine V1/V2” — nie mamy takiego kodu, uwaga niedotycząca.
-- Backend FastAPI (`backend/main.py`) — zostaje jak jest, chat idzie przez Gemini Gateway.
-
-## Uwagi techniczne
-
-- Wszystko po stronie frontu; brak nowych server functions, brak zmian schematu Supabase.
-- Nowe skróty muszą respektować focus w `<input>/<textarea>` (istniejący guard w `ShortcutManager`).
-- Bridges: subskrypcje w pojedynczym `useEffect` w `Shell`, żeby nie duplikować przy HMR.
-- Replay w EventLog nie może rzucać w bus wpisami `debug.*` z podwójnym flagiem (żeby nie zapętlić).
+Zatwierdź plan, żebym wszedł w tryb build i wdrożył kolejno etapy 1→2→3.
