@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as McpRouteImport } from './routes/mcp'
 import { Route as ImportRouteImport } from './routes/import'
 import { Route as FlowRouteImport } from './routes/flow'
+import { Route as ConnectRouteImport } from './routes/connect'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as ArchitectureRouteImport } from './routes/architecture'
 import { Route as IndexRouteImport } from './routes/index'
@@ -37,6 +38,11 @@ const ImportRoute = ImportRouteImport.update({
 const FlowRoute = FlowRouteImport.update({
   id: '/flow',
   path: '/flow',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ConnectRoute = ConnectRouteImport.update({
+  id: '/connect',
+  path: '/connect',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRoute = AuthRouteImport.update({
@@ -104,6 +110,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/architecture': typeof ArchitectureRoute
   '/auth': typeof AuthRoute
+  '/connect': typeof ConnectRoute
   '/flow': typeof FlowRoute
   '/import': typeof ImportRoute
   '/mcp': typeof McpRoute
@@ -120,6 +127,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/architecture': typeof ArchitectureRoute
   '/auth': typeof AuthRoute
+  '/connect': typeof ConnectRoute
   '/flow': typeof FlowRoute
   '/import': typeof ImportRoute
   '/mcp': typeof McpRoute
@@ -137,6 +145,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/architecture': typeof ArchitectureRoute
   '/auth': typeof AuthRoute
+  '/connect': typeof ConnectRoute
   '/flow': typeof FlowRoute
   '/import': typeof ImportRoute
   '/mcp': typeof McpRoute
@@ -155,6 +164,7 @@ export interface FileRouteTypes {
     | '/'
     | '/architecture'
     | '/auth'
+    | '/connect'
     | '/flow'
     | '/import'
     | '/mcp'
@@ -171,6 +181,7 @@ export interface FileRouteTypes {
     | '/'
     | '/architecture'
     | '/auth'
+    | '/connect'
     | '/flow'
     | '/import'
     | '/mcp'
@@ -187,6 +198,7 @@ export interface FileRouteTypes {
     | '/'
     | '/architecture'
     | '/auth'
+    | '/connect'
     | '/flow'
     | '/import'
     | '/mcp'
@@ -204,6 +216,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ArchitectureRoute: typeof ArchitectureRoute
   AuthRoute: typeof AuthRoute
+  ConnectRoute: typeof ConnectRoute
   FlowRoute: typeof FlowRoute
   ImportRoute: typeof ImportRoute
   McpRoute: typeof McpRoute
@@ -238,6 +251,13 @@ declare module '@tanstack/react-router' {
       path: '/flow'
       fullPath: '/flow'
       preLoaderRoute: typeof FlowRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/connect': {
+      id: '/connect'
+      path: '/connect'
+      fullPath: '/connect'
+      preLoaderRoute: typeof ConnectRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth': {
@@ -324,6 +344,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ArchitectureRoute: ArchitectureRoute,
   AuthRoute: AuthRoute,
+  ConnectRoute: ConnectRoute,
   FlowRoute: FlowRoute,
   ImportRoute: ImportRoute,
   McpRoute: McpRoute,

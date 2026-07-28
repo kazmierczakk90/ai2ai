@@ -141,6 +141,7 @@ export function Topbar() {
           { to: "/flow", label: "flow" },
           { to: "/architecture", label: "architecture" },
           { to: "/import", label: "chat import" },
+          { to: "/connect", label: "connect" },
         ].map((tab) => (
           <Link
             key={tab.to}
