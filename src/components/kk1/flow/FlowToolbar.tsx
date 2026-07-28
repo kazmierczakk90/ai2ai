@@ -117,7 +117,11 @@ export function FlowToolbar() {
       <ToolButton onClick={undoAction} icon={<Undo2 className="h-3 w-3" />} label="undo" />
       <ToolButton onClick={redoAction} icon={<Redo2 className="h-3 w-3" />} label="redo" />
       <ToolButton onClick={save} icon={<Save className="h-3 w-3" />} label="save" />
-      <ToolButton onClick={exportJson} icon={<Download className="h-3 w-3" />} label="export" />
+      <ToolButton onClick={exportJson} icon={<Download className="h-3 w-3" />} label="json" />
+      <ToolButton onClick={exportSvg} icon={<ImageIcon className="h-3 w-3" />} label="svg" />
+      <ToolButton onClick={exportPng} icon={<ImageIcon className="h-3 w-3" />} label="png" />
+      <ToolButton onClick={exportMermaid} icon={<Share2 className="h-3 w-3" />} label="mermaid" />
+      <ToolButton onClick={shareLink} icon={<Link2 className="h-3 w-3" />} label="share link" />
       <ToolButton
         onClick={() => {
           if (confirm("Clear the entire graph?")) clear();
