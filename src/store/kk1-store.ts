@@ -335,6 +335,7 @@ export const useKK1Store = create<State>((set, get) => ({
   },
 
 
+  voiceMode: false,
   toggleVoiceMode: () => {
     set((s) => ({ voiceMode: !s.voiceMode }));
     emit("voice.mode.toggled", "store.voice", { on: get().voiceMode });
