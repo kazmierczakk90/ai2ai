@@ -61,6 +61,16 @@ export type AgentLayer =
 
 export type AgentStatus = "idle" | "processing" | "routing";
 
+export type AgentMachineState =
+  | "REGISTERED"
+  | "IDLE"
+  | "ASSIGNED"
+  | "RUNNING"
+  | "COMPLETED"
+  | "ERROR"
+  | "REPORTING"
+  | "ARCHIVED";
+
 export type Agent = {
   id: string;
   name: string;
@@ -69,6 +79,21 @@ export type Agent = {
   license: 0 | 1 | 2 | 3 | 4 | 5;
   trust: number; // 0..1
   role: Localized;
+  state: AgentMachineState;
+  lastHeartbeat: number; // epoch ms
+  retries: number;
+  maxRetries: number;
+};
+
+export const AGENT_STATE_LABELS: Record<AgentMachineState, Record<string, string>> = {
+  REGISTERED: { en: "registered", pl: "zarejestrowany", fr: "enregistré", es: "registrado" },
+  IDLE:       { en: "idle",       pl: "bezczynny",     fr: "inactif",    es: "inactivo" },
+  ASSIGNED:   { en: "assigned",   pl: "przydzielony",  fr: "assigné",    es: "asignado" },
+  RUNNING:    { en: "running",    pl: "pracuje",       fr: "en cours",   es: "ejecutando" },
+  COMPLETED:  { en: "completed",  pl: "ukończono",     fr: "terminé",    es: "completado" },
+  ERROR:      { en: "error",      pl: "błąd",          fr: "erreur",     es: "error" },
+  REPORTING:  { en: "reporting",  pl: "raportuje",     fr: "rapport",    es: "reportando" },
+  ARCHIVED:   { en: "archived",   pl: "zarchiwizowany", fr: "archivé",   es: "archivado" },
 };
 
 const AGENT_SEED: Omit<Agent, "status" | "trust">[] = [
