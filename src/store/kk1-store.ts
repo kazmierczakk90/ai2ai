@@ -13,6 +13,18 @@ export type ScoringMatrix = {
 
 export type Localized = string | Partial<Record<Lang, string>>;
 
+export type SdaDecisionSummary = {
+  target_agent: string;
+  domain: string | null;
+  impact_area: string | null;
+  priority: number | null;
+  strategy: string | null;
+  confidence: number;
+  routing_type: "sda_exact" | "sda_keyword" | "fuko_fallback";
+  reasoning: string;
+  matched_keywords: string[];
+};
+
 export type StrategicAnalysis = {
   w0_ingestion: Localized;
   w1_identity: {
@@ -22,6 +34,7 @@ export type StrategicAnalysis = {
   };
   scoring: ScoringMatrix;
   sda_routing: { agent: string; role: Localized; latency_ms: number }[];
+  sda_decision?: SdaDecisionSummary;
 };
 
 export type Message = {
