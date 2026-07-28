@@ -96,7 +96,8 @@ export const AGENT_STATE_LABELS: Record<AgentMachineState, Record<string, string
   ARCHIVED:   { en: "archived",   pl: "zarchiwizowany", fr: "archivé",   es: "archivado" },
 };
 
-const AGENT_SEED: Omit<Agent, "status" | "trust">[] = [
+type AgentSeed = Omit<Agent, "status" | "trust" | "state" | "lastHeartbeat" | "retries" | "maxRetries">;
+const AGENT_SEED: AgentSeed[] = [
   // Cognitive (10)
   { id: "cog-01", name: "@ingestor",     layer: "cognitive", license: 2, role: { en: "W0 tokenizer",         pl: "Tokenizator W0" } },
   { id: "cog-02", name: "@parser",       layer: "cognitive", license: 2, role: { en: "Grammar parser",       pl: "Parser gramatyki" } },
