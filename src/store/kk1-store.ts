@@ -154,11 +154,17 @@ const AGENT_SEED: AgentSeed[] = [
 
 function seedAgents(): Agent[] {
   const statuses: AgentStatus[] = ["idle", "processing", "routing"];
+  const states: AgentMachineState[] = ["IDLE", "RUNNING", "ASSIGNED", "REPORTING", "COMPLETED"];
+  const now = Date.now();
   return AGENT_SEED.map((a, i) => ({
     ...a,
     status: statuses[(i * 7) % 3] as AgentStatus,
     trust: Math.round((0.55 + ((i * 17) % 45) / 100) * 100) / 100,
-  })) as Agent[];
+    state: states[(i * 5) % states.length],
+    lastHeartbeat: now - ((i * 1300) % 45_000),
+    retries: 0,
+    maxRetries: 3,
+  }));
 }
 
 export const LAYER_LABELS: Record<AgentLayer, Localized> = {
