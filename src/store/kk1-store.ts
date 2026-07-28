@@ -13,6 +13,18 @@ export type ScoringMatrix = {
 
 export type Localized = string | Partial<Record<Lang, string>>;
 
+export type SdaDecisionSummary = {
+  target_agent: string;
+  domain: string | null;
+  impact_area: string | null;
+  priority: number | null;
+  strategy: string | null;
+  confidence: number;
+  routing_type: "sda_exact" | "sda_keyword" | "fuko_fallback";
+  reasoning: string;
+  matched_keywords: string[];
+};
+
 export type StrategicAnalysis = {
   w0_ingestion: Localized;
   w1_identity: {
@@ -22,6 +34,7 @@ export type StrategicAnalysis = {
   };
   scoring: ScoringMatrix;
   sda_routing: { agent: string; role: Localized; latency_ms: number }[];
+  sda_decision?: SdaDecisionSummary;
 };
 
 export type Message = {
@@ -48,6 +61,16 @@ export type AgentLayer =
 
 export type AgentStatus = "idle" | "processing" | "routing";
 
+export type AgentMachineState =
+  | "REGISTERED"
+  | "IDLE"
+  | "ASSIGNED"
+  | "RUNNING"
+  | "COMPLETED"
+  | "ERROR"
+  | "REPORTING"
+  | "ARCHIVED";
+
 export type Agent = {
   id: string;
   name: string;
@@ -56,9 +79,25 @@ export type Agent = {
   license: 0 | 1 | 2 | 3 | 4 | 5;
   trust: number; // 0..1
   role: Localized;
+  state: AgentMachineState;
+  lastHeartbeat: number; // epoch ms
+  retries: number;
+  maxRetries: number;
 };
 
-const AGENT_SEED: Omit<Agent, "status" | "trust">[] = [
+export const AGENT_STATE_LABELS: Record<AgentMachineState, Record<string, string>> = {
+  REGISTERED: { en: "registered", pl: "zarejestrowany", fr: "enregistré", es: "registrado" },
+  IDLE:       { en: "idle",       pl: "bezczynny",     fr: "inactif",    es: "inactivo" },
+  ASSIGNED:   { en: "assigned",   pl: "przydzielony",  fr: "assigné",    es: "asignado" },
+  RUNNING:    { en: "running",    pl: "pracuje",       fr: "en cours",   es: "ejecutando" },
+  COMPLETED:  { en: "completed",  pl: "ukończono",     fr: "terminé",    es: "completado" },
+  ERROR:      { en: "error",      pl: "błąd",          fr: "erreur",     es: "error" },
+  REPORTING:  { en: "reporting",  pl: "raportuje",     fr: "rapport",    es: "reportando" },
+  ARCHIVED:   { en: "archived",   pl: "zarchiwizowany", fr: "archivé",   es: "archivado" },
+};
+
+type AgentSeed = Omit<Agent, "status" | "trust" | "state" | "lastHeartbeat" | "retries" | "maxRetries">;
+const AGENT_SEED: AgentSeed[] = [
   // Cognitive (10)
   { id: "cog-01", name: "@ingestor",     layer: "cognitive", license: 2, role: { en: "W0 tokenizer",         pl: "Tokenizator W0" } },
   { id: "cog-02", name: "@parser",       layer: "cognitive", license: 2, role: { en: "Grammar parser",       pl: "Parser gramatyki" } },
@@ -115,11 +154,17 @@ const AGENT_SEED: Omit<Agent, "status" | "trust">[] = [
 
 function seedAgents(): Agent[] {
   const statuses: AgentStatus[] = ["idle", "processing", "routing"];
+  const states: AgentMachineState[] = ["IDLE", "RUNNING", "ASSIGNED", "REPORTING", "COMPLETED"];
+  const now = Date.now();
   return AGENT_SEED.map((a, i) => ({
     ...a,
     status: statuses[(i * 7) % 3] as AgentStatus,
     trust: Math.round((0.55 + ((i * 17) % 45) / 100) * 100) / 100,
-  })) as Agent[];
+    state: states[(i * 5) % states.length],
+    lastHeartbeat: now - ((i * 1300) % 45_000),
+    retries: 0,
+    maxRetries: 3,
+  }));
 }
 
 export const LAYER_LABELS: Record<AgentLayer, Localized> = {
@@ -160,6 +205,9 @@ type State = {
   selectedAgentId: string | null;
   selectAgent: (id: string | null) => void;
   pulseAgents: () => void;
+  transitionAgent: (id: string, next: AgentMachineState, meta?: Record<string, unknown>) => void;
+  heartbeat: (id: string) => void;
+  scanHeartbeats: (timeoutMs?: number) => void;
 
   focusLayer: AgentLayer | null;
   setFocusLayer: (l: AgentLayer | null) => void;
@@ -250,6 +298,42 @@ export const useKK1Store = create<State>((set, get) => ({
       }
     }
   },
+
+  transitionAgent: (id, next, meta) => {
+    let prev: AgentMachineState | undefined;
+    let name: string | undefined;
+    set((s) => ({
+      agents: s.agents.map((a) => {
+        if (a.id !== id) return a;
+        prev = a.state;
+        name = a.name;
+        const retries = next === "ERROR" ? Math.min(a.retries + 1, a.maxRetries) : a.retries;
+        return { ...a, state: next, retries, lastHeartbeat: Date.now() };
+      }),
+    }));
+    if (prev && prev !== next) {
+      emit("agent.state.transitioned", "store.orchestrator", { id, name, from: prev, to: next, meta });
+      if (next === "ERROR") emit("agent.retry", "store.orchestrator", { id, name });
+    }
+  },
+  heartbeat: (id) => {
+    set((s) => ({
+      agents: s.agents.map((a) => (a.id === id ? { ...a, lastHeartbeat: Date.now() } : a)),
+    }));
+  },
+  scanHeartbeats: (timeoutMs = 60_000) => {
+    const cutoff = Date.now() - timeoutMs;
+    const stalled: { id: string; name: string; since: number }[] = [];
+    for (const a of get().agents) {
+      if (a.state === "ARCHIVED" || a.state === "COMPLETED") continue;
+      if (a.lastHeartbeat < cutoff) stalled.push({ id: a.id, name: a.name, since: a.lastHeartbeat });
+    }
+    if (stalled.length) {
+      emit("agent.heartbeat.missed", "store.orchestrator", { stalled, timeoutMs });
+      for (const s of stalled) get().transitionAgent(s.id, "ERROR", { reason: "heartbeat.timeout" });
+    }
+  },
+
 
   voiceMode: false,
   toggleVoiceMode: () => {

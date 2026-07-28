@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { generateText, Output, NoObjectGeneratedError } from "ai";
 import { z } from "zod";
 import { createLovableAiGatewayProvider } from "./ai-gateway.server";
+import { routeSdaServer } from "./sda/router";
 
 const LANG_NAMES: Record<string, string> = {
   en: "English",
@@ -52,6 +53,17 @@ export type ChatResponse = {
       curiosity: number;
     };
     sda_routing: string[];
+    sda_decision: {
+      target_agent: string;
+      domain: string | null;
+      impact_area: string | null;
+      priority: number | null;
+      strategy: string | null;
+      confidence: number;
+      routing_type: "sda_exact" | "sda_keyword" | "fuko_fallback";
+      reasoning: string;
+      matched_keywords: string[];
+    };
   };
   request_id: string;
   timestamp: number;
@@ -65,6 +77,9 @@ export const sendChatMessage = createServerFn({ method: "POST" })
 
     const gateway = createLovableAiGatewayProvider(key);
     const model = gateway("google/gemini-3.1-pro-preview");
+
+    const sda = routeSdaServer(data.text);
+    const sdaHint = `\n── SDA ROUTING HINT (pre-computed by W2 router) ──\ntarget_agent: ${sda.target_agent}\ndomain: ${sda.matched_rule?.domain ?? "n/a"}\nimpact_area: ${sda.matched_rule?.impact_area ?? "n/a"}\npriority: ${sda.matched_rule?.priority ?? "n/a"}\nstrategy: ${sda.matched_rule?.strategy ?? "n/a"}\nconfidence: ${sda.confidence.toFixed(2)}\nrouting_type: ${sda.routing_type}\nreasoning: ${sda.reasoning}\nUse this as a strong hint for fuko_decision and include ${sda.target_agent} at the head of sda_routing.\n`;
 
     const languageName = LANG_NAMES[data.lang] ?? "English";
     const system = `You are KK1 Core — an AGI Strategic Engine command-center assistant, powered by Gemini and acting as an in-terminal Process Designer (skill: karol-process-designer).
@@ -121,7 +136,8 @@ Output MUST be valid JSON matching the given schema:
 - w1_identity: perceived operator intent (e.g. "process_designer.request", "status.query", "chitchat")
 - fuko_decision: which agent/process you dispatch to (e.g. "$-<process-name>" or "@-ceo:acknowledge")
 - scoring: 6D scoring (each 0..1) — confidence, risk, empathy, focus, energy, curiosity
-- sda_routing: array of agent handles touched by this response (e.g. ["@karol-core","@ceo","@analyzer"])`;
+- sda_routing: array of agent handles touched by this response (e.g. ["@karol-core","@ceo","@analyzer"])
+${sdaHint}`;
 
     const messages = [
       ...data.history.map((h) => ({
@@ -163,6 +179,17 @@ Output MUST be valid JSON matching the given schema:
         fuko_decision: analysis.fuko_decision,
         "6d_scoring": analysis.scoring,
         sda_routing: analysis.sda_routing,
+        sda_decision: {
+          target_agent: sda.target_agent,
+          domain: sda.matched_rule?.domain ?? null,
+          impact_area: sda.matched_rule?.impact_area ?? null,
+          priority: sda.matched_rule?.priority ?? null,
+          strategy: sda.matched_rule?.strategy ?? null,
+          confidence: sda.confidence,
+          routing_type: sda.routing_type,
+          reasoning: sda.reasoning,
+          matched_keywords: sda.matched_keywords,
+        },
       },
       request_id: `req-${Date.now().toString(36)}`,
       timestamp: Math.floor(Date.now() / 1000),

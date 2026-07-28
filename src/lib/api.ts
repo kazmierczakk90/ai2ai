@@ -82,6 +82,17 @@ type BackendChatResponse = {
       curiosity: number;
     };
     sda_routing?: string[];
+    sda_decision?: {
+      target_agent: string;
+      domain: string | null;
+      impact_area: string | null;
+      priority: number | null;
+      strategy: string | null;
+      confidence: number;
+      routing_type: "sda_exact" | "sda_keyword" | "fuko_fallback";
+      reasoning: string;
+      matched_keywords: string[];
+    };
   };
   request_id: string;
   timestamp: number;
@@ -189,6 +200,7 @@ export async function sendMessageToCore(
       role: uni(""),
       latency_ms: 10 + i * 12,
     })),
+    sda_decision: sa.sda_decision,
   };
 
   const system_message: Message = {

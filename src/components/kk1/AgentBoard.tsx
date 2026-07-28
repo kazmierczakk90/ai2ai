@@ -1,14 +1,28 @@
 import { useEffect, useState } from "react";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import {
+  AGENT_STATE_LABELS,
   LAYER_LABELS,
   pickLocalized,
   useKK1Store,
   type Agent,
   type AgentLayer,
+  type AgentMachineState,
   type AgentStatus,
 } from "@/store/kk1-store";
 import { useI18n } from "@/i18n/i18n";
+
+const STATE_COLOR: Record<AgentMachineState, string> = {
+  REGISTERED: "bg-muted-foreground",
+  IDLE:       "bg-muted-foreground",
+  ASSIGNED:   "bg-fuko-cond shadow-[0_0_6px_var(--fuko-cond)]",
+  RUNNING:    "bg-fuko-func shadow-[0_0_8px_var(--fuko-func)] animate-pulse",
+  COMPLETED:  "bg-fuko-skill shadow-[0_0_6px_var(--fuko-skill)]",
+  ERROR:      "bg-fuko-guard shadow-[0_0_8px_var(--fuko-guard)] animate-pulse",
+  REPORTING:  "bg-primary shadow-[0_0_6px_var(--color-primary)]",
+  ARCHIVED:   "bg-border",
+};
+
 
 const STATUS_STYLE: Record<AgentStatus, { dot: string; ring: string; label: Record<string, string> }> = {
   idle: {
@@ -96,6 +110,36 @@ function AgentDetail({ agent, onClose }: { agent: Agent; onClose: () => void }) 
         {pickLocalized(agent.role, lang)}
       </div>
 
+      <div className="mt-3 grid grid-cols-2 gap-2">
+        <div className="rounded border border-border bg-panel p-2">
+          <div className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground">
+            state
+          </div>
+          <div className="mt-1 flex items-center gap-1.5">
+            <span className={`h-1.5 w-1.5 rounded-full ${STATE_COLOR[agent.state]}`} />
+            <span className="font-mono text-[11px] text-foreground">
+              {AGENT_STATE_LABELS[agent.state][lang] ?? AGENT_STATE_LABELS[agent.state].en}
+            </span>
+          </div>
+        </div>
+        <div className="rounded border border-border bg-panel p-2">
+          <div className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground">
+            retries
+          </div>
+          <div className="mt-1 font-mono text-[11px] tabular-nums text-foreground">
+            {agent.retries}/{agent.maxRetries}
+          </div>
+        </div>
+        <div className="col-span-2 rounded border border-border bg-panel p-2">
+          <div className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground">
+            heartbeat
+          </div>
+          <div className="mt-1 font-mono text-[11px] tabular-nums text-foreground">
+            {Math.max(0, Math.round((Date.now() - agent.lastHeartbeat) / 1000))}s ago
+          </div>
+        </div>
+      </div>
+
       <div className="mt-3 space-y-2">
         <div>
           <div className="flex items-center justify-between font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
@@ -127,6 +171,7 @@ function AgentDetail({ agent, onClose }: { agent: Agent; onClose: () => void }) 
     </div>
   );
 }
+
 
 export function AgentBoard() {
   const { agents, selectedAgentId, selectAgent, pulseAgents } = useKK1Store();

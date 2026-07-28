@@ -1,4 +1,4 @@
-import { ChevronDown, Cpu, GitBranch, Radar, ShieldCheck } from "lucide-react";
+import { ChevronDown, Cpu, GitBranch, Radar, ShieldCheck, Compass } from "lucide-react";
 import { pickLocalized, type StrategicAnalysis } from "@/store/kk1-store";
 import { useI18n } from "@/i18n/i18n";
 import { FukoText } from "./FukoText";
@@ -153,6 +153,59 @@ export function DeepReasoning({
               ))}
             </ol>
           </Panel>
+
+          {analysis.sda_decision && (
+            <Panel title="W2 · SDA MATRIX" icon={<Compass className="h-3 w-3" />}>
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <FukoText text={analysis.sda_decision.target_agent} />
+                  <span
+                    className={`rounded border px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-widest ${
+                      analysis.sda_decision.routing_type === "sda_exact"
+                        ? "border-fuko-func/60 text-fuko-func"
+                        : analysis.sda_decision.routing_type === "sda_keyword"
+                        ? "border-fuko-cond/60 text-fuko-cond"
+                        : "border-fuko-guard/60 text-fuko-guard"
+                    }`}
+                  >
+                    {analysis.sda_decision.routing_type.replace("_", "·")}
+                  </span>
+                  <span className="ml-auto font-mono text-[10px] tabular-nums text-foreground">
+                    {Math.round(analysis.sda_decision.confidence * 100)}%
+                  </span>
+                </div>
+
+                <div className="h-1 w-full overflow-hidden rounded-sm bg-panel">
+                  <div
+                    className="h-full rounded-sm bg-primary shadow-[0_0_6px_var(--color-primary)]"
+                    style={{ width: `${Math.round(analysis.sda_decision.confidence * 100)}%` }}
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-1 font-mono text-[10px] text-muted-foreground">
+                  <div><span className="text-foreground">domain:</span> {analysis.sda_decision.domain ?? "—"}</div>
+                  <div><span className="text-foreground">impact:</span> {analysis.sda_decision.impact_area ?? "—"}</div>
+                  <div><span className="text-foreground">strategy:</span> {analysis.sda_decision.strategy ?? "—"}</div>
+                  <div><span className="text-foreground">priority:</span> {analysis.sda_decision.priority ?? "—"}</div>
+                </div>
+
+                <p className="text-muted-foreground">{analysis.sda_decision.reasoning}</p>
+
+                {analysis.sda_decision.matched_keywords.length > 0 && (
+                  <div className="flex flex-wrap gap-1 pt-1">
+                    {analysis.sda_decision.matched_keywords.slice(0, 8).map((k) => (
+                      <span
+                        key={k}
+                        className="rounded border border-border bg-panel px-1.5 py-0.5 font-mono text-[9px] text-muted-foreground"
+                      >
+                        {k}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </Panel>
+          )}
         </div>
       )}
     </div>

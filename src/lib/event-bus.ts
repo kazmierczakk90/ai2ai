@@ -34,6 +34,11 @@ export type BusEventType =
   | "api.response"
   | "api.error"
   | "process.approved"
+  | "sda.decision"
+  | "agent.state.transitioned"
+  | "agent.heartbeat.missed"
+  | "agent.retry"
+  | "code.session.step"
   | "bus.replay"
   | "bus.snapshot";
 
