@@ -66,6 +66,7 @@ type FlowState = {
   clear: () => void;
   save: () => void;
   load: () => void;
+  importGraph: (payload: { name?: string; trigger?: string; nodes: FlowNode[]; edges: FlowEdge[] }) => void;
 
   undoAction: () => void;
   redoAction: () => void;
@@ -231,6 +232,18 @@ export const useFlowStore = create<FlowState>((set, get) => {
         trigger: p.trigger ?? get().trigger,
         selection: null,
       });
+    },
+    importGraph: (payload) => {
+      set((s) => ({
+        ...pushHistory(s),
+        nodes: payload.nodes,
+        edges: payload.edges,
+        name: payload.name ?? s.name,
+        trigger: payload.trigger ?? s.trigger,
+        selection: null,
+      }));
+      emit("flow.graph.saved", "flow.store", { imported: true, nodes: payload.nodes.length });
+      persist(get());
     },
 
     undoAction: () => {

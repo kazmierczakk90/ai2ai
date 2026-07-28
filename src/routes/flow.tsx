@@ -1,9 +1,13 @@
+import { useEffect } from "react";
 import { createFileRoute } from "@tanstack/react-router";
+import { toast } from "sonner";
 import { Shell } from "@/components/kk1/Layout";
 import { AgentPalette } from "@/components/kk1/flow/AgentPalette";
 import { FlowCanvas } from "@/components/kk1/flow/FlowCanvas";
 import { FlowToolbar } from "@/components/kk1/flow/FlowToolbar";
 import { Inspector } from "@/components/kk1/flow/Inspector";
+import { decodeShareHash } from "@/lib/flow/export";
+import { useFlowStore } from "@/store/flow-store";
 
 export const Route = createFileRoute("/flow")({
   head: () => ({
@@ -18,6 +22,28 @@ export const Route = createFileRoute("/flow")({
 });
 
 function FlowPage() {
+  useEffect(() => {
+    const hash = typeof window !== "undefined" ? window.location.hash : "";
+    if (!hash.includes("flow=")) return;
+    let cancelled = false;
+    decodeShareHash(hash).then((payload) => {
+      if (cancelled || !payload) return;
+      if (
+        !confirm(
+          `Load shared graph "${payload.name}" (${payload.nodes.length} nodes, ${payload.edges.length} edges)? This replaces the current canvas.`,
+        )
+      ) {
+        return;
+      }
+      useFlowStore.getState().importGraph(payload);
+      toast.success("Shared graph loaded", { description: `$-${payload.name}` });
+      history.replaceState(null, "", window.location.pathname);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   return (
     <Shell>
       <div className="flex h-full min-h-0 flex-col">

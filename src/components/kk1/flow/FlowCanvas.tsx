@@ -109,6 +109,8 @@ export function FlowCanvas() {
     <div className="relative min-h-0 flex-1 overflow-auto bg-background">
       <svg
         ref={svgRef}
+        id="kk1-flow-svg"
+        data-flow-svg
         width={1600}
         height={900}
         onPointerMove={onPointerMove}
