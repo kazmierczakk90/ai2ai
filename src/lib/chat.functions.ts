@@ -53,6 +53,17 @@ export type ChatResponse = {
       curiosity: number;
     };
     sda_routing: string[];
+    sda_decision: {
+      target_agent: string;
+      domain: string | null;
+      impact_area: string | null;
+      priority: number | null;
+      strategy: string | null;
+      confidence: number;
+      routing_type: "sda_exact" | "sda_keyword" | "fuko_fallback";
+      reasoning: string;
+      matched_keywords: string[];
+    };
   };
   request_id: string;
   timestamp: number;
@@ -66,6 +77,9 @@ export const sendChatMessage = createServerFn({ method: "POST" })
 
     const gateway = createLovableAiGatewayProvider(key);
     const model = gateway("google/gemini-3.1-pro-preview");
+
+    const sda = routeSdaServer(data.text);
+    const sdaHint = `\n── SDA ROUTING HINT (pre-computed by W2 router) ──\ntarget_agent: ${sda.target_agent}\ndomain: ${sda.matched_rule?.domain ?? "n/a"}\nimpact_area: ${sda.matched_rule?.impact_area ?? "n/a"}\npriority: ${sda.matched_rule?.priority ?? "n/a"}\nstrategy: ${sda.matched_rule?.strategy ?? "n/a"}\nconfidence: ${sda.confidence.toFixed(2)}\nrouting_type: ${sda.routing_type}\nreasoning: ${sda.reasoning}\nUse this as a strong hint for fuko_decision and include ${sda.target_agent} at the head of sda_routing.\n`;
 
     const languageName = LANG_NAMES[data.lang] ?? "English";
     const system = `You are KK1 Core — an AGI Strategic Engine command-center assistant, powered by Gemini and acting as an in-terminal Process Designer (skill: karol-process-designer).
