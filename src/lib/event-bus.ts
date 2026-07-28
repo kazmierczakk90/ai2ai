@@ -40,7 +40,15 @@ export type BusEventType =
   | "agent.retry"
   | "code.session.step"
   | "bus.replay"
-  | "bus.snapshot";
+  | "bus.snapshot"
+  | "flow.node.added"
+  | "flow.node.removed"
+  | "flow.edge.added"
+  | "flow.edge.removed"
+  | "flow.edge.updated"
+  | "flow.graph.saved"
+  | "flow.graph.cleared"
+  | "flow.dispatched";
 
 export type BusEvent<P = unknown> = {
   id: string;
