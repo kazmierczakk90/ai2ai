@@ -184,10 +184,12 @@ export function Shell({ children }: { children: React.ReactNode }) {
       const g = await import("@/lib/bridges/guardian-recalibration");
       const i = await import("@/lib/bridges/influence-loadbalancer");
       const s = await import("@/lib/bridges/style-memory");
+      const o = await import("@/lib/orchestrator");
       if (!mounted) return;
       g.startGuardianBridge();
       i.startInfluenceBridge();
       s.startStyleMemoryBridge();
+      o.startOrchestrator();
     })();
     return () => {
       mounted = false;
