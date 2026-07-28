@@ -110,6 +110,36 @@ function AgentDetail({ agent, onClose }: { agent: Agent; onClose: () => void }) 
         {pickLocalized(agent.role, lang)}
       </div>
 
+      <div className="mt-3 grid grid-cols-2 gap-2">
+        <div className="rounded border border-border bg-panel p-2">
+          <div className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground">
+            state
+          </div>
+          <div className="mt-1 flex items-center gap-1.5">
+            <span className={`h-1.5 w-1.5 rounded-full ${STATE_COLOR[agent.state]}`} />
+            <span className="font-mono text-[11px] text-foreground">
+              {AGENT_STATE_LABELS[agent.state][lang] ?? AGENT_STATE_LABELS[agent.state].en}
+            </span>
+          </div>
+        </div>
+        <div className="rounded border border-border bg-panel p-2">
+          <div className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground">
+            retries
+          </div>
+          <div className="mt-1 font-mono text-[11px] tabular-nums text-foreground">
+            {agent.retries}/{agent.maxRetries}
+          </div>
+        </div>
+        <div className="col-span-2 rounded border border-border bg-panel p-2">
+          <div className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground">
+            heartbeat
+          </div>
+          <div className="mt-1 font-mono text-[11px] tabular-nums text-foreground">
+            {Math.max(0, Math.round((Date.now() - agent.lastHeartbeat) / 1000))}s ago
+          </div>
+        </div>
+      </div>
+
       <div className="mt-3 space-y-2">
         <div>
           <div className="flex items-center justify-between font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
@@ -141,6 +171,7 @@ function AgentDetail({ agent, onClose }: { agent: Agent; onClose: () => void }) 
     </div>
   );
 }
+
 
 export function AgentBoard() {
   const { agents, selectedAgentId, selectAgent, pulseAgents } = useKK1Store();
