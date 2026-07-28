@@ -138,6 +138,7 @@ export function Topbar() {
       <nav className="ml-3 flex items-center gap-1">
         {[
           { to: "/", label: "command" },
+          { to: "/sok", label: "sok" },
           { to: "/flow", label: "flow" },
           { to: "/architecture", label: "architecture" },
           { to: "/import", label: "chat import" },
