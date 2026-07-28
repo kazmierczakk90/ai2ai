@@ -1,8 +1,15 @@
 import { useState } from "react";
-import { Download, Eraser, Save, Send, Undo2, Redo2 } from "lucide-react";
+import { Download, Eraser, Image as ImageIcon, Link2, Save, Send, Share2, Undo2, Redo2 } from "lucide-react";
 import { toast } from "sonner";
 import { useFlowStore } from "@/store/flow-store";
 import { serializeFlow } from "@/lib/flow/serialize";
+import {
+  buildShareUrl,
+  downloadJson,
+  downloadMermaid,
+  downloadPng,
+  downloadSvg,
+} from "@/lib/flow/export";
 import { sendMessageToCore } from "@/lib/api";
 import { useKK1Store } from "@/store/kk1-store";
 import { useI18n } from "@/i18n/i18n";
