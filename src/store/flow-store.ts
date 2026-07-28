@@ -66,6 +66,7 @@ type FlowState = {
   clear: () => void;
   save: () => void;
   load: () => void;
+  importGraph: (payload: { name?: string; trigger?: string; nodes: FlowNode[]; edges: FlowEdge[] }) => void;
 
   undoAction: () => void;
   redoAction: () => void;
