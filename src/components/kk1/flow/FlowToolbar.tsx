@@ -1,0 +1,125 @@
+import { useState } from "react";
+import { Download, Eraser, Save, Send, Undo2, Redo2 } from "lucide-react";
+import { toast } from "sonner";
+import { useFlowStore } from "@/store/flow-store";
+import { serializeFlow } from "@/lib/flow/serialize";
+import { sendMessageToCore } from "@/lib/api";
+import { useKK1Store } from "@/store/kk1-store";
+import { useI18n } from "@/i18n/i18n";
+import { emit } from "@/lib/event-bus";
+
+export function FlowToolbar() {
+  const { lang } = useI18n();
+  const name = useFlowStore((s) => s.name);
+  const trigger = useFlowStore((s) => s.trigger);
+  const setName = useFlowStore((s) => s.setName);
+  const setTrigger = useFlowStore((s) => s.setTrigger);
+  const save = useFlowStore((s) => s.save);
+  const clear = useFlowStore((s) => s.clear);
+  const undoAction = useFlowStore((s) => s.undoAction);
+  const redoAction = useFlowStore((s) => s.redoAction);
+  const [sending, setSending] = useState(false);
+
+  function exportJson() {
+    const s = useFlowStore.getState();
+    const payload = { name: s.name, trigger: s.trigger, nodes: s.nodes, edges: s.edges };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = `kk1-flow-${s.name || "graph"}.json`;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  }
+
+  async function sendToTerminal() {
+    const s = useFlowStore.getState();
+    const block = serializeFlow(s.name, s.trigger, s.nodes, s.edges);
+    setSending(true);
+    try {
+      const res = await sendMessageToCore({
+        text: `${block}\n\n!-please review this process and confirm before running`,
+        lang,
+        channel: useKK1Store.getState().activeChannel,
+      });
+      useKK1Store.getState().appendMessage(res.user_message);
+      useKK1Store.getState().appendMessage(res.system_message);
+      emit("flow.dispatched", "flow.toolbar", { name: s.name, nodes: s.nodes.length, edges: s.edges.length });
+      toast.success("Sent to Command · terminal", { description: `$-${s.name} dispatched to Gemini` });
+    } catch (err) {
+      toast.error("Dispatch failed", {
+        description: err instanceof Error ? err.message : "unknown",
+      });
+    } finally {
+      setSending(false);
+    }
+  }
+
+  return (
+    <div className="flex flex-wrap items-center gap-2 border-b border-border bg-panel px-3 py-2">
+      <div className="flex items-center gap-1 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+        $-
+      </div>
+      <input
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+        className="w-40 rounded border border-border bg-background/60 px-2 py-1 font-mono text-[11px] text-primary outline-none focus:border-primary/60"
+      />
+      <span className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+        trigger
+      </span>
+      <input
+        value={trigger}
+        onChange={(e) => setTrigger(e.target.value)}
+        className="w-56 rounded border border-border bg-background/60 px-2 py-1 font-mono text-[11px] outline-none focus:border-primary/60"
+      />
+
+      <div className="mx-2 h-5 w-px bg-border" />
+
+      <ToolButton onClick={undoAction} icon={<Undo2 className="h-3 w-3" />} label="undo" />
+      <ToolButton onClick={redoAction} icon={<Redo2 className="h-3 w-3" />} label="redo" />
+      <ToolButton onClick={save} icon={<Save className="h-3 w-3" />} label="save" />
+      <ToolButton onClick={exportJson} icon={<Download className="h-3 w-3" />} label="export" />
+      <ToolButton
+        onClick={() => {
+          if (confirm("Clear the entire graph?")) clear();
+        }}
+        icon={<Eraser className="h-3 w-3" />}
+        label="clear"
+        danger
+      />
+
+      <button
+        onClick={sendToTerminal}
+        disabled={sending}
+        className="ml-auto flex items-center gap-1.5 rounded border border-primary/60 bg-primary/10 px-3 py-1 font-mono text-[11px] uppercase tracking-widest text-primary hover:bg-primary/20 disabled:opacity-50"
+      >
+        <Send className="h-3 w-3" />
+        {sending ? "dispatching…" : "send to command"}
+      </button>
+    </div>
+  );
+}
+
+function ToolButton({
+  onClick,
+  icon,
+  label,
+  danger,
+}: {
+  onClick: () => void;
+  icon: React.ReactNode;
+  label: string;
+  danger?: boolean;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={`flex items-center gap-1 rounded border border-border bg-background/60 px-2 py-1 font-mono text-[10px] uppercase tracking-widest hover:border-primary/40 hover:text-foreground ${
+        danger ? "text-fuko-guard hover:border-fuko-guard/60" : "text-muted-foreground"
+      }`}
+    >
+      {icon}
+      {label}
+    </button>
+  );
+}
