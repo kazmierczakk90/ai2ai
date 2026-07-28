@@ -205,6 +205,9 @@ type State = {
   selectedAgentId: string | null;
   selectAgent: (id: string | null) => void;
   pulseAgents: () => void;
+  transitionAgent: (id: string, next: AgentMachineState, meta?: Record<string, unknown>) => void;
+  heartbeat: (id: string) => void;
+  scanHeartbeats: (timeoutMs?: number) => void;
 
   focusLayer: AgentLayer | null;
   setFocusLayer: (l: AgentLayer | null) => void;
