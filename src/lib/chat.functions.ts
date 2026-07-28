@@ -136,7 +136,8 @@ Output MUST be valid JSON matching the given schema:
 - w1_identity: perceived operator intent (e.g. "process_designer.request", "status.query", "chitchat")
 - fuko_decision: which agent/process you dispatch to (e.g. "$-<process-name>" or "@-ceo:acknowledge")
 - scoring: 6D scoring (each 0..1) — confidence, risk, empathy, focus, energy, curiosity
-- sda_routing: array of agent handles touched by this response (e.g. ["@karol-core","@ceo","@analyzer"])`;
+- sda_routing: array of agent handles touched by this response (e.g. ["@karol-core","@ceo","@analyzer"])
+${sdaHint}`;
 
     const messages = [
       ...data.history.map((h) => ({
