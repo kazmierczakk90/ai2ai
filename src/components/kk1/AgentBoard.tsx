@@ -1,14 +1,28 @@
 import { useEffect, useState } from "react";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import {
+  AGENT_STATE_LABELS,
   LAYER_LABELS,
   pickLocalized,
   useKK1Store,
   type Agent,
   type AgentLayer,
+  type AgentMachineState,
   type AgentStatus,
 } from "@/store/kk1-store";
 import { useI18n } from "@/i18n/i18n";
+
+const STATE_COLOR: Record<AgentMachineState, string> = {
+  REGISTERED: "bg-muted-foreground",
+  IDLE:       "bg-muted-foreground",
+  ASSIGNED:   "bg-fuko-cond shadow-[0_0_6px_var(--fuko-cond)]",
+  RUNNING:    "bg-fuko-func shadow-[0_0_8px_var(--fuko-func)] animate-pulse",
+  COMPLETED:  "bg-fuko-skill shadow-[0_0_6px_var(--fuko-skill)]",
+  ERROR:      "bg-fuko-guard shadow-[0_0_8px_var(--fuko-guard)] animate-pulse",
+  REPORTING:  "bg-primary shadow-[0_0_6px_var(--color-primary)]",
+  ARCHIVED:   "bg-border",
+};
+
 
 const STATUS_STYLE: Record<AgentStatus, { dot: string; ring: string; label: Record<string, string> }> = {
   idle: {
