@@ -29,13 +29,45 @@ export function FlowToolbar() {
 
   function exportJson() {
     const s = useFlowStore.getState();
-    const payload = { name: s.name, trigger: s.trigger, nodes: s.nodes, edges: s.edges };
-    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = `kk1-flow-${s.name || "graph"}.json`;
-    a.click();
-    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+    downloadJson({ name: s.name, trigger: s.trigger, nodes: s.nodes, edges: s.edges });
+  }
+
+  async function exportSvg() {
+    try {
+      downloadSvg(useFlowStore.getState().name);
+      toast.success("SVG exported");
+    } catch (e) {
+      toast.error("SVG export failed", { description: e instanceof Error ? e.message : "unknown" });
+    }
+  }
+
+  async function exportPng() {
+    try {
+      await downloadPng(useFlowStore.getState().name);
+      toast.success("PNG exported");
+    } catch (e) {
+      toast.error("PNG export failed", { description: e instanceof Error ? e.message : "unknown" });
+    }
+  }
+
+  function exportMermaid() {
+    const s = useFlowStore.getState();
+    downloadMermaid({ name: s.name, trigger: s.trigger, nodes: s.nodes, edges: s.edges });
+    toast.success("Mermaid diagram exported", { description: "paste into mermaid.live to preview" });
+  }
+
+  async function shareLink() {
+    const s = useFlowStore.getState();
+    try {
+      const url = await buildShareUrl({ name: s.name, trigger: s.trigger, nodes: s.nodes, edges: s.edges });
+      await navigator.clipboard.writeText(url);
+      emit("flow.graph.saved", "flow.toolbar", { shared: true, size: url.length });
+      toast.success("Share link copied", {
+        description: url.length > 80 ? url.slice(0, 77) + "…" : url,
+      });
+    } catch (e) {
+      toast.error("Share link failed", { description: e instanceof Error ? e.message : "unknown" });
+    }
   }
 
   async function sendToTerminal() {
