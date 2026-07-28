@@ -151,7 +151,7 @@ async function gunzip(bytes: Uint8Array): Promise<string> {
     return new TextDecoder().decode(bytes);
   }
   const ds = new DecompressionStream("gzip");
-  const stream = new Blob([bytes]).stream().pipeThrough(ds);
+  const stream = new Blob([bytes as BlobPart]).stream().pipeThrough(ds);
   return await new Response(stream).text();
 }
 
