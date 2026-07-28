@@ -13,10 +13,14 @@ export const Route = createFileRoute("/flow")({
   head: () => ({
     meta: [
       { title: "Flow Canvas — KK1 Core" },
-      { name: "description", content: "Graphical agent-route designer with per-arrow tasks and SDA hints." },
+      { name: "description", content: "Graphical agent-route designer with per-arrow tasks and SDA hints for multi-agent AGI orchestration." },
       { property: "og:title", content: "Flow Canvas — KK1 Core" },
       { property: "og:description", content: "Design multi-agent processes visually and dispatch them to the Gemini Process-Designer." },
+      { property: "og:type", content: "website" },
+      { property: "og:url", content: "https://ai2ai.lovable.app/flow" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
+    links: [{ rel: "canonical", href: "https://ai2ai.lovable.app/flow" }],
   }),
   component: FlowPage,
 });
@@ -46,6 +50,7 @@ function FlowPage() {
 
   return (
     <Shell>
+      <h1 className="sr-only">Flow Canvas — Visual Agent-Route Designer</h1>
       <div className="flex h-full min-h-0 flex-col">
         <FlowToolbar />
         <div className="flex min-h-0 flex-1">

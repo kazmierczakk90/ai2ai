@@ -23,6 +23,16 @@ function oauthNs(): OAuthNs {
 
 export const Route = createFileRoute("/.lovable/oauth/consent")({
   ssr: false,
+  head: () => ({
+    meta: [
+      { title: "Authorize app — KK1 Core" },
+      { name: "description", content: "Review and approve an app requesting access to your KK1 Core MCP tools." },
+      { name: "robots", content: "noindex" },
+      { property: "og:title", content: "Authorize app — KK1 Core" },
+      { property: "og:description", content: "Approve or deny an app requesting KK1 Core MCP access." },
+      { property: "og:type", content: "website" },
+    ],
+  }),
   validateSearch: (s: Record<string, unknown>) => ({
     authorization_id: typeof s.authorization_id === "string" ? s.authorization_id : "",
   }),
