@@ -299,7 +299,42 @@ export const useKK1Store = create<State>((set, get) => ({
     }
   },
 
-  voiceMode: false,
+  transitionAgent: (id, next, meta) => {
+    let prev: AgentMachineState | undefined;
+    let name: string | undefined;
+    set((s) => ({
+      agents: s.agents.map((a) => {
+        if (a.id !== id) return a;
+        prev = a.state;
+        name = a.name;
+        const retries = next === "ERROR" ? Math.min(a.retries + 1, a.maxRetries) : a.retries;
+        return { ...a, state: next, retries, lastHeartbeat: Date.now() };
+      }),
+    }));
+    if (prev && prev !== next) {
+      emit("agent.state.transitioned", "store.orchestrator", { id, name, from: prev, to: next, meta });
+      if (next === "ERROR") emit("agent.retry", "store.orchestrator", { id, name });
+    }
+  },
+  heartbeat: (id) => {
+    set((s) => ({
+      agents: s.agents.map((a) => (a.id === id ? { ...a, lastHeartbeat: Date.now() } : a)),
+    }));
+  },
+  scanHeartbeats: (timeoutMs = 60_000) => {
+    const cutoff = Date.now() - timeoutMs;
+    const stalled: { id: string; name: string; since: number }[] = [];
+    for (const a of get().agents) {
+      if (a.state === "ARCHIVED" || a.state === "COMPLETED") continue;
+      if (a.lastHeartbeat < cutoff) stalled.push({ id: a.id, name: a.name, since: a.lastHeartbeat });
+    }
+    if (stalled.length) {
+      emit("agent.heartbeat.missed", "store.orchestrator", { stalled, timeoutMs });
+      for (const s of stalled) get().transitionAgent(s.id, "ERROR", { reason: "heartbeat.timeout" });
+    }
+  },
+
+
   toggleVoiceMode: () => {
     set((s) => ({ voiceMode: !s.voiceMode }));
     emit("voice.mode.toggled", "store.voice", { on: get().voiceMode });
