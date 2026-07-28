@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SokRouteImport } from './routes/sok'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as McpRouteImport } from './routes/mcp'
 import { Route as ImportRouteImport } from './routes/import'
@@ -26,6 +27,11 @@ import { Route as ApiPublicTelegramTagRouteImport } from './routes/api/public/te
 import { Route as ApiPublicTelegramStatusRouteImport } from './routes/api/public/telegram/status'
 import { Route as ApiPublicTelegramMessagesRouteImport } from './routes/api/public/telegram/messages'
 
+const SokRoute = SokRouteImport.update({
+  id: '/sok',
+  path: '/sok',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
   path: '/sitemap.xml',
@@ -121,6 +127,7 @@ export interface FileRoutesByFullPath {
   '/import': typeof ImportRoute
   '/mcp': typeof McpRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/sok': typeof SokRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
@@ -139,6 +146,7 @@ export interface FileRoutesByTo {
   '/import': typeof ImportRoute
   '/mcp': typeof McpRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/sok': typeof SokRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
@@ -158,6 +166,7 @@ export interface FileRoutesById {
   '/import': typeof ImportRoute
   '/mcp': typeof McpRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/sok': typeof SokRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
@@ -178,6 +187,7 @@ export interface FileRouteTypes {
     | '/import'
     | '/mcp'
     | '/sitemap.xml'
+    | '/sok'
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
     | '/.lovable/oauth/consent'
@@ -196,6 +206,7 @@ export interface FileRouteTypes {
     | '/import'
     | '/mcp'
     | '/sitemap.xml'
+    | '/sok'
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
     | '/.lovable/oauth/consent'
@@ -214,6 +225,7 @@ export interface FileRouteTypes {
     | '/import'
     | '/mcp'
     | '/sitemap.xml'
+    | '/sok'
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
     | '/.lovable/oauth/consent'
@@ -233,6 +245,7 @@ export interface RootRouteChildren {
   ImportRoute: typeof ImportRoute
   McpRoute: typeof McpRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  SokRoute: typeof SokRoute
   Char91DotmcpChar93ListToolsRoute: typeof Char91DotmcpChar93ListToolsRoute
   Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
@@ -245,6 +258,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/sok': {
+      id: '/sok'
+      path: '/sok'
+      fullPath: '/sok'
+      preLoaderRoute: typeof SokRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/sitemap.xml': {
       id: '/sitemap.xml'
       path: '/sitemap.xml'
@@ -369,6 +389,7 @@ const rootRouteChildren: RootRouteChildren = {
   ImportRoute: ImportRoute,
   McpRoute: McpRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
+  SokRoute: SokRoute,
   Char91DotmcpChar93ListToolsRoute: Char91DotmcpChar93ListToolsRoute,
   Char91DotwellKnownChar93OauthProtectedResourceRoute:
     Char91DotwellKnownChar93OauthProtectedResourceRoute,

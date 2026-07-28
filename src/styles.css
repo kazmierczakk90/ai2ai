@@ -126,3 +126,12 @@ body {
     transparent 100%
   );
 }
+
+@utility sok-pulse {
+  animation: sok-pulse-anim 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes sok-pulse-anim {
+  0%, 100% { box-shadow: 0 0 0 0 color-mix(in oklab, var(--fuko-func) 40%, transparent); }
+  50% { box-shadow: 0 0 0 4px color-mix(in oklab, var(--fuko-func) 10%, transparent); }
+}
