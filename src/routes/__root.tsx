@@ -77,14 +77,21 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
-      { name: "description", content: "Lovable Generated Project" },
-      { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "Lovable Generated Project" },
+      { title: "KK1 Core — AGI Strategic Engine" },
+      {
+        name: "description",
+        content:
+          "KK1 Core is a command-center SaaS for orchestrating AGI strategy with FUKO-LANG, multi-agent flow design, and deep reasoning telemetry.",
+      },
+      { property: "og:title", content: "KK1 Core — AGI Strategic Engine" },
+      {
+        property: "og:description",
+        content:
+          "Orchestrate AGI strategy with FUKO-LANG symbols, dual-output terminal, 6D scoring, and SDA routing.",
+      },
       { property: "og:type", content: "website" },
+      { property: "og:site_name", content: "KK1 Core" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:site", content: "@Lovable" },
     ],
     links: [
       {
@@ -92,6 +99,26 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         href: appCss,
       },
       { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
+    ],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "Organization",
+          name: "KK1 Core",
+          url: "https://ai2ai.lovable.app",
+        }),
+      },
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "WebSite",
+          name: "KK1 Core",
+          url: "https://ai2ai.lovable.app",
+        }),
+      },
     ],
   }),
   shellComponent: RootShell,

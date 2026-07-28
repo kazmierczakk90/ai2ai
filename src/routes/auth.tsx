@@ -4,6 +4,17 @@ import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/auth")({
   ssr: false,
+  head: () => ({
+    meta: [
+      { title: "Sign In — KK1 Core" },
+      { name: "description", content: "Sign in or create an account to access the KK1 Core AGI strategic command center." },
+      { name: "robots", content: "noindex" },
+      { property: "og:title", content: "Sign In — KK1 Core" },
+      { property: "og:description", content: "Sign in to KK1 Core — AGI strategic command center." },
+      { property: "og:type", content: "website" },
+    ],
+    links: [{ rel: "canonical", href: "https://ai2ai.lovable.app/auth" }],
+  }),
   validateSearch: (s: Record<string, unknown>) => ({
     next: typeof s.next === "string" ? s.next : "",
   }),

@@ -13,6 +13,45 @@ export const Route = createFileRoute("/connect")({
       { name: "description", content: "Connect ChatGPT, Claude, Claude Code, or any MCP-capable AI assistant to the KK1 Core MCP server." },
       { property: "og:title", content: "Agent integrations — KK1 Core" },
       { property: "og:description", content: "Point your AI assistant at KK1 Core's MCP server and refresh it when the app changes." },
+      { property: "og:type", content: "website" },
+      { property: "og:url", content: "https://ai2ai.lovable.app/connect" },
+      { name: "twitter:card", content: "summary_large_image" },
+    ],
+    links: [{ rel: "canonical", href: "https://ai2ai.lovable.app/connect" }],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "FAQPage",
+          mainEntity: [
+            {
+              "@type": "Question",
+              name: "How do I connect KK1 Core to ChatGPT?",
+              acceptedAnswer: {
+                "@type": "Answer",
+                text: "Open ChatGPT Settings → Connectors → Advanced, enable Developer mode, click Create app, name the connector, and paste the KK1 Core MCP URL.",
+              },
+            },
+            {
+              "@type": "Question",
+              name: "How do I connect KK1 Core to Claude?",
+              acceptedAnswer: {
+                "@type": "Answer",
+                text: "In Claude's Connectors page, click Add custom connector, name it, and paste the KK1 Core MCP URL, then approve the OAuth flow.",
+              },
+            },
+            {
+              "@type": "Question",
+              name: "How do I connect KK1 Core to Claude Code?",
+              acceptedAnswer: {
+                "@type": "Answer",
+                text: "Run `claude mcp add --scope user --transport http kk1-core <MCP_URL>` in your terminal, then start Claude Code and run /mcp to confirm the connection.",
+              },
+            },
+          ],
+        }),
+      },
     ],
   }),
   component: ConnectPage,
