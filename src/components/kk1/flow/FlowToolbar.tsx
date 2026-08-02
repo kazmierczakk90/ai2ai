@@ -1,8 +1,9 @@
 import { useState } from "react";
-import { Download, Eraser, Image as ImageIcon, Link2, Save, Send, Share2, Undo2, Redo2 } from "lucide-react";
+import { Download, Eraser, Image as ImageIcon, LayoutGrid, Link2, Save, Send, Share2, Sparkles, Undo2, Redo2 } from "lucide-react";
 import { toast } from "sonner";
 import { useFlowStore } from "@/store/flow-store";
 import { serializeFlow } from "@/lib/flow/serialize";
+import { computeLayout } from "@/lib/flow/layout";
 import {
   buildShareUrl,
   downloadJson,
@@ -14,6 +15,7 @@ import { sendMessageToCore } from "@/lib/api";
 import { useKK1Store } from "@/store/kk1-store";
 import { useI18n } from "@/i18n/i18n";
 import { emit } from "@/lib/event-bus";
+import { FlowImportDialog } from "./FlowImportDialog";
 
 export function FlowToolbar() {
   const { lang } = useI18n();
@@ -25,7 +27,17 @@ export function FlowToolbar() {
   const clear = useFlowStore((s) => s.clear);
   const undoAction = useFlowStore((s) => s.undoAction);
   const redoAction = useFlowStore((s) => s.redoAction);
+  const applyLayout = useFlowStore((s) => s.applyLayout);
   const [sending, setSending] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
+
+  function autoLayout() {
+    const s = useFlowStore.getState();
+    if (!s.nodes.length) return;
+    applyLayout(computeLayout(s.nodes, s.edges));
+    toast.success("Auto-layout zastosowany");
+  }
+
 
   function exportJson() {
     const s = useFlowStore.getState();
