@@ -128,6 +128,7 @@ export function FlowToolbar() {
 
       <ToolButton onClick={undoAction} icon={<Undo2 className="h-3 w-3" />} label="undo" />
       <ToolButton onClick={redoAction} icon={<Redo2 className="h-3 w-3" />} label="redo" />
+      <ToolButton onClick={autoLayout} icon={<LayoutGrid className="h-3 w-3" />} label="auto layout" />
       <ToolButton onClick={save} icon={<Save className="h-3 w-3" />} label="save" />
       <ToolButton onClick={exportJson} icon={<Download className="h-3 w-3" />} label="json" />
       <ToolButton onClick={exportSvg} icon={<ImageIcon className="h-3 w-3" />} label="svg" />
@@ -143,16 +144,28 @@ export function FlowToolbar() {
         danger
       />
 
-      <button
-        onClick={sendToTerminal}
-        disabled={sending}
-        className="ml-auto flex items-center gap-1.5 rounded border border-primary/60 bg-primary/10 px-3 py-1 font-mono text-[11px] uppercase tracking-widest text-primary hover:bg-primary/20 disabled:opacity-50"
-      >
-        <Send className="h-3 w-3" />
-        {sending ? "dispatching…" : "send to command"}
-      </button>
+      <div className="ml-auto flex items-center gap-2">
+        <button
+          onClick={() => setImportOpen(true)}
+          className="flex items-center gap-1.5 rounded border border-fuko-skill/60 bg-fuko-skill/10 px-3 py-1 font-mono text-[11px] uppercase tracking-widest text-fuko-skill hover:bg-fuko-skill/20"
+        >
+          <Sparkles className="h-3 w-3" />
+          ai from file
+        </button>
+        <button
+          onClick={sendToTerminal}
+          disabled={sending}
+          className="flex items-center gap-1.5 rounded border border-primary/60 bg-primary/10 px-3 py-1 font-mono text-[11px] uppercase tracking-widest text-primary hover:bg-primary/20 disabled:opacity-50"
+        >
+          <Send className="h-3 w-3" />
+          {sending ? "dispatching…" : "send to command"}
+        </button>
+      </div>
+
+      {importOpen && <FlowImportDialog onClose={() => setImportOpen(false)} />}
     </div>
   );
+
 }
 
 function ToolButton({
