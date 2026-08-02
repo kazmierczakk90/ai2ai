@@ -48,7 +48,10 @@ export type BusEventType =
   | "flow.edge.updated"
   | "flow.graph.saved"
   | "flow.graph.cleared"
+  | "flow.graph.layout"
+  | "flow.graph.ai_imported"
   | "flow.dispatched";
+
 
 export type BusEvent<P = unknown> = {
   id: string;
