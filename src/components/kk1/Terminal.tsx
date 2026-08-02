@@ -15,6 +15,14 @@ function ts(iso: string) {
   return d.toISOString().slice(11, 19);
 }
 
+/** Render timestamps only after mount — server and client clocks differ. */
+function Timestamp({ iso }: { iso: string }) {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+  return <span className="tabular-nums">{mounted ? ts(iso) : "--:--:--"}</span>;
+}
+
+
 function MessageRow({ m, onApproveProcess }: { m: Message; onApproveProcess: (text: string) => void }) {
   const expanded = useKK1Store((s) => !!s.expanded[m.id]);
   const toggle = useKK1Store((s) => s.toggleExpanded);
