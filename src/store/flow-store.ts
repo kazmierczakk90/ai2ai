@@ -171,6 +171,28 @@ export const useFlowStore = create<FlowState>((set, get) => {
       emit("flow.node.removed", "flow.store", { id });
       persist(get());
     },
+    duplicateNode: (id) => {
+      const src = get().nodes.find((n) => n.id === id);
+      if (!src) return null;
+      const newId = uid("n");
+      set((s) => ({
+        ...pushHistory(s),
+        nodes: [...s.nodes, { ...src, id: newId, x: src.x + 40, y: src.y + 60 }],
+        selection: { kind: "node", id: newId },
+      }));
+      emit("flow.node.added", "flow.store", { id: newId, agent: src.agent, kind: src.kind, duplicated: true });
+      persist(get());
+      return newId;
+    },
+    applyLayout: (positions) => {
+      set((s) => ({
+        ...pushHistory(s),
+        nodes: s.nodes.map((n) => (positions[n.id] ? { ...n, ...positions[n.id] } : n)),
+      }));
+      emit("flow.graph.layout", "flow.store", { nodes: Object.keys(positions).length });
+      persist(get());
+    },
+
 
     addEdge: (e) => {
       const id = uid("e");
