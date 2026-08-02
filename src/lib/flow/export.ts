@@ -47,16 +47,25 @@ function inlineSvg(): { svg: SVGSVGElement; source: string; width: number; heigh
   let height = 900;
   let minX = 0;
   let minY = 0;
+  const grid = live?.querySelector<SVGRectElement>('rect[fill="url(#flow-grid)"]');
   if (live) {
     const prev = live.getAttribute("transform");
+    const gridDisplay = grid?.getAttribute("display");
     live.setAttribute("transform", "translate(0 0) scale(1)");
+    grid?.setAttribute("display", "none");
     try {
-      const nodesLayer = live.getBBox();
-      // ignore the huge grid rect by clamping to a sane area around content
-      minX = Math.max(0, nodesLayer.x + 4000 > 0 ? 0 : 0);
-      minY = 0;
+      const box = live.getBBox();
+      if (box.width > 1 && box.height > 1) {
+        const pad = 40;
+        minX = Math.floor(box.x - pad);
+        minY = Math.floor(box.y - pad);
+        width = Math.ceil(box.width + pad * 2);
+        height = Math.ceil(box.height + pad * 2);
+      }
     } finally {
       if (prev) live.setAttribute("transform", prev);
+      if (gridDisplay) grid?.setAttribute("display", gridDisplay);
+      else grid?.removeAttribute("display");
     }
   }
   const clone = svg.cloneNode(true) as SVGSVGElement;
@@ -75,6 +84,7 @@ function inlineSvg(): { svg: SVGSVGElement; source: string; width: number; heigh
   source = source.replace(/var\([^)]+\)/g, "#94a3b8");
   return { svg, source, width, height };
 }
+
 
 export function downloadSvg(name: string) {
   const res = inlineSvg();
