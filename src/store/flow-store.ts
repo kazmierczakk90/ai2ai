@@ -53,6 +53,9 @@ type FlowState = {
   addNode: (n: Omit<FlowNode, "id">) => string;
   updateNode: (id: string, patch: Partial<FlowNode>) => void;
   removeNode: (id: string) => void;
+  duplicateNode: (id: string) => string | null;
+  applyLayout: (positions: Record<string, { x: number; y: number }>) => void;
+
 
   addEdge: (e: Omit<FlowEdge, "id">) => string;
   updateEdge: (id: string, patch: Partial<FlowEdge>) => void;
