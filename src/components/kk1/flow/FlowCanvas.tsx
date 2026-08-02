@@ -114,7 +114,16 @@ export function FlowCanvas() {
     });
   }
 
+  const didFit = useRef(false);
   useEffect(() => {
+    if (didFit.current || !nodes.length) return;
+    didFit.current = true;
+    const id = requestAnimationFrame(fitView);
+    return () => cancelAnimationFrame(id);
+  }, [nodes.length, fitView]);
+
+  useEffect(() => {
+
     const el = wrapRef.current;
     if (!el) return;
     function onWheel(e: WheelEvent) {
