@@ -1,8 +1,9 @@
 import { useState } from "react";
-import { Download, Eraser, Image as ImageIcon, Link2, Save, Send, Share2, Undo2, Redo2 } from "lucide-react";
+import { Download, Eraser, Image as ImageIcon, LayoutGrid, Link2, Save, Send, Share2, Sparkles, Undo2, Redo2 } from "lucide-react";
 import { toast } from "sonner";
 import { useFlowStore } from "@/store/flow-store";
 import { serializeFlow } from "@/lib/flow/serialize";
+import { computeLayout } from "@/lib/flow/layout";
 import {
   buildShareUrl,
   downloadJson,
@@ -14,6 +15,7 @@ import { sendMessageToCore } from "@/lib/api";
 import { useKK1Store } from "@/store/kk1-store";
 import { useI18n } from "@/i18n/i18n";
 import { emit } from "@/lib/event-bus";
+import { FlowImportDialog } from "./FlowImportDialog";
 
 export function FlowToolbar() {
   const { lang } = useI18n();
@@ -25,7 +27,17 @@ export function FlowToolbar() {
   const clear = useFlowStore((s) => s.clear);
   const undoAction = useFlowStore((s) => s.undoAction);
   const redoAction = useFlowStore((s) => s.redoAction);
+  const applyLayout = useFlowStore((s) => s.applyLayout);
   const [sending, setSending] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
+
+  function autoLayout() {
+    const s = useFlowStore.getState();
+    if (!s.nodes.length) return;
+    applyLayout(computeLayout(s.nodes, s.edges));
+    toast.success("Auto-layout zastosowany");
+  }
+
 
   function exportJson() {
     const s = useFlowStore.getState();
@@ -116,6 +128,7 @@ export function FlowToolbar() {
 
       <ToolButton onClick={undoAction} icon={<Undo2 className="h-3 w-3" />} label="undo" />
       <ToolButton onClick={redoAction} icon={<Redo2 className="h-3 w-3" />} label="redo" />
+      <ToolButton onClick={autoLayout} icon={<LayoutGrid className="h-3 w-3" />} label="auto layout" />
       <ToolButton onClick={save} icon={<Save className="h-3 w-3" />} label="save" />
       <ToolButton onClick={exportJson} icon={<Download className="h-3 w-3" />} label="json" />
       <ToolButton onClick={exportSvg} icon={<ImageIcon className="h-3 w-3" />} label="svg" />
@@ -131,16 +144,28 @@ export function FlowToolbar() {
         danger
       />
 
-      <button
-        onClick={sendToTerminal}
-        disabled={sending}
-        className="ml-auto flex items-center gap-1.5 rounded border border-primary/60 bg-primary/10 px-3 py-1 font-mono text-[11px] uppercase tracking-widest text-primary hover:bg-primary/20 disabled:opacity-50"
-      >
-        <Send className="h-3 w-3" />
-        {sending ? "dispatching…" : "send to command"}
-      </button>
+      <div className="ml-auto flex items-center gap-2">
+        <button
+          onClick={() => setImportOpen(true)}
+          className="flex items-center gap-1.5 rounded border border-fuko-skill/60 bg-fuko-skill/10 px-3 py-1 font-mono text-[11px] uppercase tracking-widest text-fuko-skill hover:bg-fuko-skill/20"
+        >
+          <Sparkles className="h-3 w-3" />
+          ai from file
+        </button>
+        <button
+          onClick={sendToTerminal}
+          disabled={sending}
+          className="flex items-center gap-1.5 rounded border border-primary/60 bg-primary/10 px-3 py-1 font-mono text-[11px] uppercase tracking-widest text-primary hover:bg-primary/20 disabled:opacity-50"
+        >
+          <Send className="h-3 w-3" />
+          {sending ? "dispatching…" : "send to command"}
+        </button>
+      </div>
+
+      {importOpen && <FlowImportDialog onClose={() => setImportOpen(false)} />}
     </div>
   );
+
 }
 
 function ToolButton({

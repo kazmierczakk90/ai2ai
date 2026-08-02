@@ -39,10 +39,41 @@ export function downloadJson(payload: FlowGraphPayload) {
  * Serialize the live SVG, inline CSS var colours so the file renders
  * standalone in any viewer (draw.io / Figma / browser preview).
  */
-function inlineSvg(): { svg: SVGSVGElement; source: string } | null {
+function inlineSvg(): { svg: SVGSVGElement; source: string; width: number; height: number } | null {
   const svg = document.querySelector<SVGSVGElement>("[data-flow-svg]");
   if (!svg) return null;
+  const live = svg.querySelector<SVGGElement>("[data-flow-viewport]");
+  let width = 1600;
+  let height = 900;
+  let minX = 0;
+  let minY = 0;
+  const grid = live?.querySelector<SVGRectElement>('rect[fill="url(#flow-grid)"]');
+  if (live) {
+    const prev = live.getAttribute("transform");
+    const gridDisplay = grid?.getAttribute("display");
+    live.setAttribute("transform", "translate(0 0) scale(1)");
+    grid?.setAttribute("display", "none");
+    try {
+      const box = live.getBBox();
+      if (box.width > 1 && box.height > 1) {
+        const pad = 40;
+        minX = Math.floor(box.x - pad);
+        minY = Math.floor(box.y - pad);
+        width = Math.ceil(box.width + pad * 2);
+        height = Math.ceil(box.height + pad * 2);
+      }
+    } finally {
+      if (prev) live.setAttribute("transform", prev);
+      if (gridDisplay) grid?.setAttribute("display", gridDisplay);
+      else grid?.removeAttribute("display");
+    }
+  }
   const clone = svg.cloneNode(true) as SVGSVGElement;
+  const cloneViewport = clone.querySelector("[data-flow-viewport]");
+  cloneViewport?.setAttribute("transform", "translate(0 0) scale(1)");
+  clone.setAttribute("width", String(width));
+  clone.setAttribute("height", String(height));
+  clone.setAttribute("viewBox", `${minX} ${minY} ${width} ${height}`);
   clone.setAttribute("xmlns", "http://www.w3.org/2000/svg");
   clone.setAttribute("xmlns:xlink", "http://www.w3.org/1999/xlink");
   let source = new XMLSerializer().serializeToString(clone);
@@ -51,8 +82,9 @@ function inlineSvg(): { svg: SVGSVGElement; source: string } | null {
   }
   // strip any remaining var(...) references
   source = source.replace(/var\([^)]+\)/g, "#94a3b8");
-  return { svg, source };
+  return { svg, source, width, height };
 }
+
 
 export function downloadSvg(name: string) {
   const res = inlineSvg();
@@ -64,8 +96,9 @@ export function downloadSvg(name: string) {
 export async function downloadPng(name: string) {
   const res = inlineSvg();
   if (!res) throw new Error("Canvas SVG not found");
-  const w = Number(res.svg.getAttribute("width")) || 1600;
-  const h = Number(res.svg.getAttribute("height")) || 900;
+  const w = res.width;
+  const h = res.height;
+
   const svgBlob = new Blob([res.source], { type: "image/svg+xml;charset=utf-8" });
   const url = URL.createObjectURL(svgBlob);
   try {

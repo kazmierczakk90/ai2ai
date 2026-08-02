@@ -15,6 +15,14 @@ function ts(iso: string) {
   return d.toISOString().slice(11, 19);
 }
 
+/** Render timestamps only after mount — server and client clocks differ. */
+function Timestamp({ iso }: { iso: string }) {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+  return <span className="tabular-nums">{mounted ? ts(iso) : "--:--:--"}</span>;
+}
+
+
 function MessageRow({ m, onApproveProcess }: { m: Message; onApproveProcess: (text: string) => void }) {
   const expanded = useKK1Store((s) => !!s.expanded[m.id]);
   const toggle = useKK1Store((s) => s.toggleExpanded);
@@ -27,7 +35,7 @@ function MessageRow({ m, onApproveProcess }: { m: Message; onApproveProcess: (te
   return (
     <div className="border-b border-border/60 px-4 py-3 hover:bg-panel/30">
       <div className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
-        <span className="tabular-nums">{ts(m.ts)}</span>
+        <Timestamp iso={m.ts} />
         <span className="opacity-40">│</span>
         <span className={isUser ? "text-fuko-cond" : "text-primary"}>
           {isUser ? t("term.role.operator") : t("term.role.system")}
