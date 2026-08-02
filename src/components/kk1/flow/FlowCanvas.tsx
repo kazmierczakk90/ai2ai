@@ -117,10 +117,13 @@ export function FlowCanvas() {
   const didFit = useRef(false);
   useEffect(() => {
     if (didFit.current || !nodes.length) return;
-    didFit.current = true;
-    const id = requestAnimationFrame(fitView);
+    const id = requestAnimationFrame(() => {
+      didFit.current = true;
+      fitView();
+    });
     return () => cancelAnimationFrame(id);
   }, [nodes.length, fitView]);
+
 
   useEffect(() => {
 
