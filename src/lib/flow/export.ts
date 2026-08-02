@@ -39,10 +39,32 @@ export function downloadJson(payload: FlowGraphPayload) {
  * Serialize the live SVG, inline CSS var colours so the file renders
  * standalone in any viewer (draw.io / Figma / browser preview).
  */
-function inlineSvg(): { svg: SVGSVGElement; source: string } | null {
+function inlineSvg(): { svg: SVGSVGElement; source: string; width: number; height: number } | null {
   const svg = document.querySelector<SVGSVGElement>("[data-flow-svg]");
   if (!svg) return null;
+  const live = svg.querySelector<SVGGElement>("[data-flow-viewport]");
+  let width = 1600;
+  let height = 900;
+  let minX = 0;
+  let minY = 0;
+  if (live) {
+    const prev = live.getAttribute("transform");
+    live.setAttribute("transform", "translate(0 0) scale(1)");
+    try {
+      const nodesLayer = live.getBBox();
+      // ignore the huge grid rect by clamping to a sane area around content
+      minX = Math.max(0, nodesLayer.x + 4000 > 0 ? 0 : 0);
+      minY = 0;
+    } finally {
+      if (prev) live.setAttribute("transform", prev);
+    }
+  }
   const clone = svg.cloneNode(true) as SVGSVGElement;
+  const cloneViewport = clone.querySelector("[data-flow-viewport]");
+  cloneViewport?.setAttribute("transform", "translate(0 0) scale(1)");
+  clone.setAttribute("width", String(width));
+  clone.setAttribute("height", String(height));
+  clone.setAttribute("viewBox", `${minX} ${minY} ${width} ${height}`);
   clone.setAttribute("xmlns", "http://www.w3.org/2000/svg");
   clone.setAttribute("xmlns:xlink", "http://www.w3.org/1999/xlink");
   let source = new XMLSerializer().serializeToString(clone);
@@ -51,7 +73,7 @@ function inlineSvg(): { svg: SVGSVGElement; source: string } | null {
   }
   // strip any remaining var(...) references
   source = source.replace(/var\([^)]+\)/g, "#94a3b8");
-  return { svg, source };
+  return { svg, source, width, height };
 }
 
 export function downloadSvg(name: string) {
@@ -64,8 +86,9 @@ export function downloadSvg(name: string) {
 export async function downloadPng(name: string) {
   const res = inlineSvg();
   if (!res) throw new Error("Canvas SVG not found");
-  const w = Number(res.svg.getAttribute("width")) || 1600;
-  const h = Number(res.svg.getAttribute("height")) || 900;
+  const w = res.width;
+  const h = res.height;
+
   const svgBlob = new Blob([res.source], { type: "image/svg+xml;charset=utf-8" });
   const url = URL.createObjectURL(svgBlob);
   try {
