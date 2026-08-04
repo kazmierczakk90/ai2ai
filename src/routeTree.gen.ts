@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SokRouteImport } from './routes/sok'
+import { Route as Ai2aiRouteImport } from './routes/ai2ai'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as McpRouteImport } from './routes/mcp'
 import { Route as ImportRouteImport } from './routes/import'
@@ -30,6 +31,11 @@ import { Route as ApiPublicTelegramMessagesRouteImport } from './routes/api/publ
 const SokRoute = SokRouteImport.update({
   id: '/sok',
   path: '/sok',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const Ai2aiRoute = Ai2aiRouteImport.update({
+  id: '/ai2ai',
+  path: '/ai2ai',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
@@ -120,6 +126,7 @@ const ApiPublicTelegramMessagesRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/ai2ai': typeof Ai2aiRoute
   '/architecture': typeof ArchitectureRoute
   '/auth': typeof AuthRoute
   '/connect': typeof ConnectRoute
@@ -139,6 +146,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/ai2ai': typeof Ai2aiRoute
   '/architecture': typeof ArchitectureRoute
   '/auth': typeof AuthRoute
   '/connect': typeof ConnectRoute
@@ -159,6 +167,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/ai2ai': typeof Ai2aiRoute
   '/architecture': typeof ArchitectureRoute
   '/auth': typeof AuthRoute
   '/connect': typeof ConnectRoute
@@ -180,6 +189,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/ai2ai'
     | '/architecture'
     | '/auth'
     | '/connect'
@@ -199,6 +209,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/ai2ai'
     | '/architecture'
     | '/auth'
     | '/connect'
@@ -218,6 +229,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/ai2ai'
     | '/architecture'
     | '/auth'
     | '/connect'
@@ -238,6 +250,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  Ai2aiRoute: typeof Ai2aiRoute
   ArchitectureRoute: typeof ArchitectureRoute
   AuthRoute: typeof AuthRoute
   ConnectRoute: typeof ConnectRoute
@@ -321,6 +334,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/ai2ai': {
+      id: '/ai2ai'
+      path: '/ai2ai'
+      fullPath: '/ai2ai'
+      preLoaderRoute: typeof Ai2aiRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/.well-known/oauth-protected-resource': {
       id: '/.well-known/oauth-protected-resource'
       path: '/.well-known/oauth-protected-resource'
@@ -382,6 +402,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  Ai2aiRoute: Ai2aiRoute,
   ArchitectureRoute: ArchitectureRoute,
   AuthRoute: AuthRoute,
   ConnectRoute: ConnectRoute,
