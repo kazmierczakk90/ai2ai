@@ -363,11 +363,13 @@ export function Terminal() {
           </button>
           <button
             onClick={() => submit()}
-            className="flex h-8 w-8 items-center justify-center rounded border border-primary/40 bg-primary/10 text-primary hover:bg-primary/20"
+            disabled={pending}
+            className="flex h-8 w-8 items-center justify-center rounded border border-primary/40 bg-primary/10 text-primary hover:bg-primary/20 disabled:opacity-50"
             aria-label="Send"
           >
-            <ArrowUp className="h-4 w-4" />
+            {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowUp className="h-4 w-4" />}
           </button>
+
         </div>
         <div className="mt-1.5 flex items-center gap-3 px-1 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
           <span>{t("composer.enter")}</span>
