@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowUp, Mic, MicOff, Pencil, Terminal as TerminalIcon, Volume2 } from "lucide-react";
+import { ArrowUp, Loader2, Mic, MicOff, Pencil, Terminal as TerminalIcon, Volume2 } from "lucide-react";
+import { toast } from "sonner";
 import { pickLocalized, useKK1Store, type Message } from "@/store/kk1-store";
 import { useI18n } from "@/i18n/i18n";
 import { FukoText } from "./FukoText";
@@ -135,6 +136,7 @@ export function Terminal() {
   const triggerEmergency = useKK1Store((s) => s.triggerEmergency);
   const { t, lang } = useI18n();
   const [draft, setDraft] = useState("");
+  const [pending, setPending] = useState(false);
   const [listening, setListening] = useState(false);
   const scroller = useRef<HTMLDivElement>(null);
   const recRef = useRef<SR | null>(null);
