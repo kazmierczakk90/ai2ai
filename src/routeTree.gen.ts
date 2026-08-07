@@ -10,7 +10,6 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SokRouteImport } from './routes/sok'
-import { Route as Ai2aiRouteImport } from './routes/ai2ai'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as McpRouteImport } from './routes/mcp'
 import { Route as ImportRouteImport } from './routes/import'
@@ -18,6 +17,7 @@ import { Route as FlowRouteImport } from './routes/flow'
 import { Route as ConnectRouteImport } from './routes/connect'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as ArchitectureRouteImport } from './routes/architecture'
+import { Route as Ai2aiRouteImport } from './routes/ai2ai'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
 import { Route as Char91DotmcpChar93ListToolsRouteImport } from './routes/[.mcp]/list-tools'
@@ -31,11 +31,6 @@ import { Route as ApiPublicTelegramMessagesRouteImport } from './routes/api/publ
 const SokRoute = SokRouteImport.update({
   id: '/sok',
   path: '/sok',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const Ai2aiRoute = Ai2aiRouteImport.update({
-  id: '/ai2ai',
-  path: '/ai2ai',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
@@ -71,6 +66,11 @@ const AuthRoute = AuthRouteImport.update({
 const ArchitectureRoute = ArchitectureRouteImport.update({
   id: '/architecture',
   path: '/architecture',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const Ai2aiRoute = Ai2aiRouteImport.update({
+  id: '/ai2ai',
+  path: '/ai2ai',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -327,18 +327,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ArchitectureRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/ai2ai': {
       id: '/ai2ai'
       path: '/ai2ai'
       fullPath: '/ai2ai'
       preLoaderRoute: typeof Ai2aiRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/.well-known/oauth-protected-resource': {

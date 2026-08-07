@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowUp, Mic, MicOff, Pencil, Terminal as TerminalIcon, Volume2 } from "lucide-react";
+import { ArrowUp, Loader2, Mic, MicOff, Pencil, Terminal as TerminalIcon, Volume2 } from "lucide-react";
+import { toast } from "sonner";
 import { pickLocalized, useKK1Store, type Message } from "@/store/kk1-store";
 import { useI18n } from "@/i18n/i18n";
 import { FukoText } from "./FukoText";
@@ -135,6 +136,7 @@ export function Terminal() {
   const triggerEmergency = useKK1Store((s) => s.triggerEmergency);
   const { t, lang } = useI18n();
   const [draft, setDraft] = useState("");
+  const [pending, setPending] = useState(false);
   const [listening, setListening] = useState(false);
   const scroller = useRef<HTMLDivElement>(null);
   const recRef = useRef<SR | null>(null);
@@ -180,22 +182,39 @@ export function Terminal() {
 
   const submitRaw = async (txt: string) => {
     const activeChannel = useKK1Store.getState().activeChannel;
+    const scrollDown = () =>
+      requestAnimationFrame(() => {
+        scroller.current?.scrollTo({ top: scroller.current.scrollHeight, behavior: "smooth" });
+      });
+
+    // Optimistic operator turn — visible immediately.
+    append({
+      id: `m-${Date.now()}`,
+      role: "user",
+      ts: new Date().toISOString(),
+      dialogue: txt,
+    });
+    setPending(true);
+    scrollDown();
+
     try {
       const res = await sendMessageToCore({ text: txt, lang, channel: activeChannel });
-      append(res.user_message);
       append(res.system_message);
-    } catch {
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      toast.error("!-uplink_error-", { description: message });
       append({
-        id: `m-${Date.now()}`,
-        role: "user",
+        id: `m-${Date.now()}-err`,
+        role: "system",
         ts: new Date().toISOString(),
-        dialogue: txt,
+        dialogue: `!-uplink_error- ${message}`,
       });
+    } finally {
+      setPending(false);
+      scrollDown();
     }
-    requestAnimationFrame(() => {
-      scroller.current?.scrollTo({ top: scroller.current.scrollHeight, behavior: "smooth" });
-    });
   };
+
 
   // F2 dispatches "kk1:voice-start" — activate the mic on that event.
   useEffect(() => {
@@ -292,7 +311,23 @@ export function Terminal() {
         {messages.map((m) => (
           <MessageRow key={m.id} m={m} onApproveProcess={submit} />
         ))}
+        {pending && (
+          <div className="border-b border-border/60 px-4 py-3">
+            <div className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+              <span className="tabular-nums">--:--:--</span>
+              <span className="opacity-40">│</span>
+              <span className="text-primary">{t("term.role.system")}</span>
+              <span className="opacity-40">│</span>
+              <span>{t("term.tag.dialogue")}</span>
+            </div>
+            <div className="mt-1.5 flex items-center gap-2 font-mono text-xs text-primary">
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              <span className="animate-pulse">$-core_reasoning · uplink active…</span>
+            </div>
+          </div>
+        )}
       </div>
+
 
       <footer className="border-t border-border bg-panel px-3 py-2">
         <div
@@ -328,11 +363,13 @@ export function Terminal() {
           </button>
           <button
             onClick={() => submit()}
-            className="flex h-8 w-8 items-center justify-center rounded border border-primary/40 bg-primary/10 text-primary hover:bg-primary/20"
+            disabled={pending}
+            className="flex h-8 w-8 items-center justify-center rounded border border-primary/40 bg-primary/10 text-primary hover:bg-primary/20 disabled:opacity-50"
             aria-label="Send"
           >
-            <ArrowUp className="h-4 w-4" />
+            {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowUp className="h-4 w-4" />}
           </button>
+
         </div>
         <div className="mt-1.5 flex items-center gap-3 px-1 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
           <span>{t("composer.enter")}</span>
