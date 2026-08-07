@@ -202,7 +202,7 @@ export function Terminal() {
       append(res.system_message);
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
-      toast.error(t("term.error.title") ?? "uplink error", { description: message });
+      toast.error("!-uplink_error-", { description: message });
       append({
         id: `m-${Date.now()}-err`,
         role: "system",
