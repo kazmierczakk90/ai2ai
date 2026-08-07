@@ -180,22 +180,39 @@ export function Terminal() {
 
   const submitRaw = async (txt: string) => {
     const activeChannel = useKK1Store.getState().activeChannel;
+    const scrollDown = () =>
+      requestAnimationFrame(() => {
+        scroller.current?.scrollTo({ top: scroller.current.scrollHeight, behavior: "smooth" });
+      });
+
+    // Optimistic operator turn — visible immediately.
+    append({
+      id: `m-${Date.now()}`,
+      role: "user",
+      ts: new Date().toISOString(),
+      dialogue: txt,
+    });
+    setPending(true);
+    scrollDown();
+
     try {
       const res = await sendMessageToCore({ text: txt, lang, channel: activeChannel });
-      append(res.user_message);
       append(res.system_message);
-    } catch {
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      toast.error(t("term.error.title") ?? "uplink error", { description: message });
       append({
-        id: `m-${Date.now()}`,
-        role: "user",
+        id: `m-${Date.now()}-err`,
+        role: "system",
         ts: new Date().toISOString(),
-        dialogue: txt,
+        dialogue: `!-uplink_error- ${message}`,
       });
+    } finally {
+      setPending(false);
+      scrollDown();
     }
-    requestAnimationFrame(() => {
-      scroller.current?.scrollTo({ top: scroller.current.scrollHeight, behavior: "smooth" });
-    });
   };
+
 
   // F2 dispatches "kk1:voice-start" — activate the mic on that event.
   useEffect(() => {
