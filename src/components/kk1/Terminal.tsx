@@ -311,7 +311,23 @@ export function Terminal() {
         {messages.map((m) => (
           <MessageRow key={m.id} m={m} onApproveProcess={submit} />
         ))}
+        {pending && (
+          <div className="border-b border-border/60 px-4 py-3">
+            <div className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+              <span className="tabular-nums">--:--:--</span>
+              <span className="opacity-40">│</span>
+              <span className="text-primary">{t("term.role.system")}</span>
+              <span className="opacity-40">│</span>
+              <span>{t("term.tag.dialogue")}</span>
+            </div>
+            <div className="mt-1.5 flex items-center gap-2 font-mono text-xs text-primary">
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              <span className="animate-pulse">$-core_reasoning · uplink active…</span>
+            </div>
+          </div>
+        )}
       </div>
+
 
       <footer className="border-t border-border bg-panel px-3 py-2">
         <div
