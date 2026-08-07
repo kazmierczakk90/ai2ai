@@ -155,7 +155,14 @@ export async function sendMessageToCore(
 
   // Build a short history from the store (last ~10 turns) in current lang.
   const state = useKK1Store.getState();
-  const history = state.messages.slice(-10).map((m) => ({
+  const all = state.messages.slice(-11);
+  // Drop an optimistic echo of the turn we're about to send (it is passed as `text`).
+  const last = all[all.length - 1];
+  const prior =
+    last && last.role === "user" && pickLocalized(last.dialogue, payload.lang) === payload.text
+      ? all.slice(0, -1)
+      : all;
+  const history = prior.slice(-10).map((m) => ({
     role: m.role,
     text: pickLocalized(m.dialogue, payload.lang),
   }));
