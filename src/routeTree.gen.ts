@@ -21,6 +21,7 @@ import { Route as Ai2aiRouteImport } from './routes/ai2ai'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
 import { Route as Char91DotmcpChar93ListToolsRouteImport } from './routes/[.mcp]/list-tools'
+import { Route as ApiPublicMcpTokenRouteImport } from './routes/api/public/mcp-token'
 import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
 import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
 import { Route as ApiPublicTelegramWebhookRouteImport } from './routes/api/public/telegram/webhook'
@@ -90,6 +91,11 @@ const Char91DotmcpChar93ListToolsRoute =
     path: '/.mcp/list-tools',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicMcpTokenRoute = ApiPublicMcpTokenRouteImport.update({
+  id: '/api/public/mcp-token',
+  path: '/api/public/mcp-token',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const Char91DotmcpChar93InvokeToolToolRoute =
   Char91DotmcpChar93InvokeToolToolRouteImport.update({
     id: '/.mcp/invoke-tool/$tool',
@@ -139,6 +145,7 @@ export interface FileRoutesByFullPath {
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
+  '/api/public/mcp-token': typeof ApiPublicMcpTokenRoute
   '/api/public/telegram/messages': typeof ApiPublicTelegramMessagesRoute
   '/api/public/telegram/status': typeof ApiPublicTelegramStatusRoute
   '/api/public/telegram/tag': typeof ApiPublicTelegramTagRoute
@@ -159,6 +166,7 @@ export interface FileRoutesByTo {
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
+  '/api/public/mcp-token': typeof ApiPublicMcpTokenRoute
   '/api/public/telegram/messages': typeof ApiPublicTelegramMessagesRoute
   '/api/public/telegram/status': typeof ApiPublicTelegramStatusRoute
   '/api/public/telegram/tag': typeof ApiPublicTelegramTagRoute
@@ -180,6 +188,7 @@ export interface FileRoutesById {
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
+  '/api/public/mcp-token': typeof ApiPublicMcpTokenRoute
   '/api/public/telegram/messages': typeof ApiPublicTelegramMessagesRoute
   '/api/public/telegram/status': typeof ApiPublicTelegramStatusRoute
   '/api/public/telegram/tag': typeof ApiPublicTelegramTagRoute
@@ -202,6 +211,7 @@ export interface FileRouteTypes {
     | '/.well-known/oauth-protected-resource'
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
+    | '/api/public/mcp-token'
     | '/api/public/telegram/messages'
     | '/api/public/telegram/status'
     | '/api/public/telegram/tag'
@@ -222,6 +232,7 @@ export interface FileRouteTypes {
     | '/.well-known/oauth-protected-resource'
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
+    | '/api/public/mcp-token'
     | '/api/public/telegram/messages'
     | '/api/public/telegram/status'
     | '/api/public/telegram/tag'
@@ -242,6 +253,7 @@ export interface FileRouteTypes {
     | '/.well-known/oauth-protected-resource'
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
+    | '/api/public/mcp-token'
     | '/api/public/telegram/messages'
     | '/api/public/telegram/status'
     | '/api/public/telegram/tag'
@@ -263,6 +275,7 @@ export interface RootRouteChildren {
   Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
   Char91DotmcpChar93InvokeToolToolRoute: typeof Char91DotmcpChar93InvokeToolToolRoute
+  ApiPublicMcpTokenRoute: typeof ApiPublicMcpTokenRoute
   ApiPublicTelegramMessagesRoute: typeof ApiPublicTelegramMessagesRoute
   ApiPublicTelegramStatusRoute: typeof ApiPublicTelegramStatusRoute
   ApiPublicTelegramTagRoute: typeof ApiPublicTelegramTagRoute
@@ -355,6 +368,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof Char91DotmcpChar93ListToolsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/mcp-token': {
+      id: '/api/public/mcp-token'
+      path: '/api/public/mcp-token'
+      fullPath: '/api/public/mcp-token'
+      preLoaderRoute: typeof ApiPublicMcpTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/.mcp/invoke-tool/$tool': {
       id: '/.mcp/invoke-tool/$tool'
       path: '/.mcp/invoke-tool/$tool'
@@ -416,6 +436,7 @@ const rootRouteChildren: RootRouteChildren = {
     Char91DotwellKnownChar93OauthProtectedResourceRoute,
   DotlovableOauthConsentRoute: DotlovableOauthConsentRoute,
   Char91DotmcpChar93InvokeToolToolRoute: Char91DotmcpChar93InvokeToolToolRoute,
+  ApiPublicMcpTokenRoute: ApiPublicMcpTokenRoute,
   ApiPublicTelegramMessagesRoute: ApiPublicTelegramMessagesRoute,
   ApiPublicTelegramStatusRoute: ApiPublicTelegramStatusRoute,
   ApiPublicTelegramTagRoute: ApiPublicTelegramTagRoute,
